@@ -1,0 +1,4 @@
+# Exact versions used to validate the examples; install the package via [mpl].
+matplotlib==3.11.2
+mplhep==1.3.3
+mplhep-data==0.1.0

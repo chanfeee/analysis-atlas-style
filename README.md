@@ -1,0 +1,328 @@
+# ATLAS 发表绘图风格
+
+本目录提供 ATLAS 风格默认值、可选的对象样式预设和可编辑示例。范围是字体、字号、刻度、边距、图例、标注、颜色、线型、数据点、误差带和导出格式；数据读取、分箱、归一化、误差计算及拟合由各分析脚本负责。
+
+Matplotlib 使用 `mplhep` 的 ATLAS 样式；ROOT 使用按公开 ATLAS 样式参数整理的独立头文件，可供 C++ 和 PyROOT 使用。两端遵循相同的 ATLAS 排版约定，字体渲染和尺寸单位存在后端差异，不保证逐像素相同。
+
+综合样图使用固定 toy 数据，展示堆叠背景、信号、替代模型、误差带和比值面板：
+
+![综合样图](docs/showcase_mpl.png)
+
+![默认强调色与填充色](docs/palette.png)
+
+## 安装与统一入口
+
+这是独立可安装的 `analysis-atlas-style` 包，Python 导入名为 `plotting`，当前版本 `0.1.0`。所有包配置都在本目录，不需要打包整个分析项目。使用 Python 3.11+，克隆仓库后在包含 `pyproject.toml` 的仓库根目录执行：
+
+```bash
+python -m pip install -e '.[mpl]'
+```
+
+只使用 ROOT / PyROOT 时安装基础包即可：`python -m pip install -e .`。基础包没有 Matplotlib 或 PyROOT 安装依赖；ROOT 由现有 ROOT 环境提供，只有调用 `use_root_style()` 时才加载 PyROOT。导入 `plotting` 本身不加载后端，也不修改全局绘图设置。
+
+如果本包位于另一个项目的 `plotting/` 子目录，在外层项目目录使用 `python -m pip install -e './plotting[mpl]'` 即可。下文命令均以本包自己的仓库根目录为工作目录。
+
+在其他分析目录可使用本目录的绝对路径安装。安装后不依赖当前工作目录，也不需要添加 `sys.path`：
+
+```python
+import matplotlib.pyplot as plt
+from plotting import use_atlas_style, artist_style, atlas_label
+
+use_atlas_style()
+fig, ax = plt.subplots()
+ax.stairs([12, 25, 18], [0, 10, 20, 30], label="Toy prediction",
+          **artist_style("prediction"))
+atlas_label(ax, text="", data=False, com=13)
+ax.set(xlabel=r"$m$ [GeV]", ylabel="Events / 10 GeV")
+ax.legend()
+fig.savefig("figure.pdf")
+```
+
+PyROOT 的初始化只需一行；函数返回原生 `TStyle*`：
+
+```python
+import ROOT
+from plotting import use_root_style
+
+style = use_root_style()
+canvas = ROOT.TCanvas("canvas", "", 800, 600)
+hist = ROOT.TH1D("hist", ";x;Events", 10, 0, 10)
+ROOT.AtlasStyle.Signal(hist)
+hist.SetLineWidth(4)  # 手动设置保持优先。
+```
+
+公开接口集中在 `plotting`：
+
+| 接口 | 用途 |
+| --- | --- |
+| `use_atlas_style(font="Arial", rc=None)` | 应用 Matplotlib 全局默认值 |
+| `atlas_style(font="Arial", rc=None)` | 临时应用，退出时恢复周围的 rc 设置 |
+| `artist_style(role, index=0, **overrides)` | 取得可手动覆盖的原生 kwargs，不执行绘图 |
+| `atlas_label(ax, text=..., data=..., com=..., lumi=None, **kwargs)` | 显式添加 ATLAS 与数据集标注 |
+| `use_root_style()` | 加载随包分发的头文件，应用 ROOT 默认值 |
+| `root_include_dir()` | 取得 C++ 头文件目录，返回原生 `Path` |
+| `COLORS`、`FILL_COLORS`、`SERIES_COLORS`、`SERIES_FILL_COLORS` | 具名颜色与五色循环 |
+
+旧的 `plotting.mpl`、`plotting.colors` 导入方式仍然可用。默认值存放在内部 `_defaults.py`；调用者通过 `rc`、对象 kwargs 和原生 setter 调整，不需要依赖内部配置结构。
+
+## C++ 接入与分发
+
+三个 C++ 头文件随 wheel 一起安装。下面的命令不需要加载 ROOT，可用于取得编译器 `-I` 或 `ROOT_INCLUDE_PATH` 所需的目录：
+
+```bash
+python -m plotting --root-include
+atlas-style --root-include
+atlas-style --version
+```
+
+将该目录加入包含路径后，在自己的 C++ 宏中直接写 `#include "AtlasStyle.h"`，继续使用原生 `SetAtlasStyle()`、`AtlasLabel()` 与 `AtlasStyle::Signal(hist)` 等接口。三个头文件也可整体复制给纯 C++ 项目使用，无 Python 运行依赖。
+
+构建 wheel 时，在仓库根目录运行 `python -m pip wheel --no-deps . --wheel-dir dist`。将构建出的 wheel 安装到目标环境即可；目标环境需要单独提供相应后端，Matplotlib 依赖也可通过 wheel 的 `[mpl]` extra 安装。构建工具同时支持源码包。
+
+wheel 只包含运行代码、说明和 C++ 头文件；toy 数据、示例脚本、测试和预览图留在源码目录。完成上述可编辑安装后，以下 `python -m plotting.examples...` 命令可在源码仓库根目录运行，示例继续作为可以自由修改的绘图脚本。
+
+## 公开论文参考
+
+当前选用 ATLAS [JHEP 08 (2024) 182，arXiv:2406.19701v2](https://arxiv.org/abs/2406.19701v2) 的 Figure 1（论文第 16 页）作为分布图的版式参考：白底、四边向内刻度、粗斜体 ATLAS 标识、能量与亮度信息、无边框图例、黑色数据点和斜线误差带。
+
+原图包含多个子图、堆叠分布和 Prediction/Data 面板。这些属于具体图的组成，由各绘图脚本决定。本目录的基础示例使用 toy 数据验证通用视觉元素，没有复刻论文数据，也没有把原图布局设为所有图的固定格式。
+
+## 文件
+
+- `__init__.py`：统一公开接口；导入时不加载绘图后端或应用风格。
+- `pyproject.toml`：版本、可选依赖、打包规则和 `atlas-style` 入口。
+- `_defaults.py`：内部保存全局、对象和标注默认值。
+- `mpl.py`：应用 Matplotlib 默认值、临时上下文、对象 kwargs 与 ATLAS 标注。
+- `root/__init__.py`：按需加载 PyROOT，自动定位安装后的头文件。
+- `root/AtlasStyle.h`：ROOT 风格和 ATLAS 标注，不依赖额外绘图框架。
+- `root/AtlasArtists.h`：仅设置 ROOT 原生对象的视觉属性；不创建对象、不绘图、不处理数据。
+- `colors.py`、`root/AtlasColors.h`：Python 和原生 C++ 的曲线强调色、面积填充色及系列颜色循环。
+- `examples/atlas_mpl.py`、`examples/atlas_root.C`：使用相同 toy 数据的示例。
+- `examples/showcase_mpl.py`、`examples/showcase_root.C`：综合样图，集中展示当前风格的主要特性。
+- `examples/showcase_inputs.dat`：两套综合样图共用的固定 toy 输入。
+- `examples/palette.py`：生成颜色卡，便于查看默认配色。
+- `requirements.txt`：固定已验证的 Matplotlib 端版本，作为复现样图时的约束；正常安装依赖由 `pyproject.toml` 管理。
+- `tests/test_api.py`：检查无副作用导入、头文件定位、手动覆盖、上下文恢复及跨后端颜色一致性。
+
+## 综合样图
+
+优先查看这一组示例，它们在一张图中包含：
+
+- 全部五个主色：蓝、绿、橙的三种堆叠背景，红色信号和紫色替代模型。背景使用浅填充和同色相描边，曲线使用完整强调色。
+- 黑色 toy 数据点及统计误差条、灰色总预测误差带、无边框双列图例。
+- ATLAS Simulation 标识、碰撞能量、亮度、附加说明，以及带单位的坐标轴。
+- 上方面板的对数纵轴、下方面板的线性 Toy / Pred. 比值、单位参考线和替代模型比值。
+- 字号、刻度、标注和图例位置的局部调整；布局直接写在示例中。
+- 矢量 PDF 与字体嵌入；Matplotlib 另存 PNG，ROOT 预览由 PDF 渲染。
+
+完成安装后，在仓库根目录运行：
+
+```bash
+python -m plotting.examples.showcase_mpl
+root -l -b -q examples/showcase_root.C
+```
+
+输出在 `examples/output/showcase_mpl.pdf`、`showcase_mpl.png` 及 `showcase_root.pdf`。ROOT 示例需先按下文激活 conda base，并保证 Ghostscript 在 PATH 中。两套示例使用同一份固定输入；所有数值均为 toy 示例，信号曲线明确放大四倍。下方面板的数据误差为 `sqrt(toy_sample) / nominal`，预测相对误差另画为围绕 1 的带，两者未合并为一种误差。
+
+需要 ROOT 的 PNG 预览时，可使用已安装的 Ghostscript 从 PDF 生成：
+
+```bash
+gs -q -dSAFER -dBATCH -dNOPAUSE -dUseCropBox -sDEVICE=png16m -r150 -sOutputFile=examples/output/showcase_root.png examples/output/showcase_root.pdf
+```
+
+Matplotlib 的 `make_figure()` 返回原生 Figure 和两个 Axes，便于继续修改。ROOT 直接使用 TPad、TH1D 累积填充和 TGraphErrors。通用外观来自公共默认值；示例仍自行决定布局、范围、堆叠顺序与比值。比值面板的线宽、字号也展示了局部覆盖的方式。
+
+## 默认值与手动调整
+
+覆盖顺序为：**基础 ATLAS 样式 → 本项目默认值 → 调用者设置**。保存时不重新应用样式。
+
+| 元素 | 默认约定 | 调整方式 |
+| --- | --- | --- |
+| 画布、坐标轴 | 白底，四边向内刻度，显示次刻度，无网格；基础画布 8 × 6 inch / ROOT 800 × 600 | 原生 rc 参数、Figure / Axes / Canvas / Pad 接口 |
+| 字体、图例 | Arial / ROOT Helvetica；黑色文字，无边框图例 | rc 参数、标注 kwargs、原生文字或图例 setter |
+| 数据点 | 黑色实心圆、无连接线、误差条无端帽 | `artist_style("data", ...)` 或 `AtlasStyle::Data` 后使用 setter |
+| 总预测 | 深灰实线 | `prediction` 预设 |
+| 信号、替代模型 | 深红长虚线、紫色短虚线 | `signal`、`alternative` 预设 |
+| 背景填充 | 五色循环，浅填充、同色相细描边 | `background` 预设，零起始 `index` 选色 |
+| 不确定度 | 灰色斜线；在彩色背景上可加半透明白色衬底 | `uncertainty` 预设；ROOT 可另用 `UncertaintyShade` |
+| 参考线、附加文字 | 深灰虚线、深灰说明文字 | `reference`、`annotation` 预设 |
+| 导出 | 优先矢量 PDF，嵌入字体，Matplotlib PNG 默认 300 dpi | 原生 `savefig` / `Print` 参数 |
+
+`artist_style()` 返回一份新的原生 kwargs 字典，不执行绘图。ROOT 的对象预设只调用 `Set...` 方法，返回原对象的引用。它们都是可选项：只想使用字体、刻度等共性外观时，调用全局入口后直接使用原生绘图 API 即可。Matplotlib 的普通曲线自动使用五色循环；ROOT 的多个系列需用 `AtlasColors::Series` 或 `AtlasStyle::Background` 显式选色。
+
+不同元素不能全部通过 Matplotlib rcParams 或 ROOT TStyle 自动识别，例如普通曲线究竟是信号还是总预测。因此全局设置负责共性外观，具有物理角色的对象由调用者显式选择预设。面板数量、坐标范围、线性或对数、单位、亮度和误差定义没有自动默认值。
+
+## Matplotlib
+
+安装方式见上文。在仓库根目录运行基本示例和颜色卡：
+
+```bash
+python -m plotting.examples.atlas_mpl
+python -m plotting.examples.palette
+```
+
+默认采用 Helvetica 兼容的 Arial TrueType 字体，确保 PDF 字体嵌入的格式正确；macOS 系统提供该字体，包中不分发字体文件。本次检查中，mplhep 自带的 TeX Gyre Heros OpenType 字体在 Type 42 导出下触发了 PDF 字体类型警告，因此这里显式使用 Arial。其他系统需要先注册包含常规、粗体、斜体和粗斜体的 Arial 字体族，或通过 `use_atlas_style(font="Liberation Sans")` 显式选择已安装的兼容 TrueType 字体。缺少指定字体时会直接报错。需要精确复现已验证的依赖版本时，可安装 `python -m pip install -c requirements.txt -e '.[mpl]'`。
+
+在自己的绘图脚本中，在创建 Figure 之前应用样式：
+
+```python
+import matplotlib.pyplot as plt
+from plotting import use_atlas_style, atlas_label
+
+use_atlas_style()
+fig, ax = plt.subplots()
+# 在这里绘制自己的数据，并设置坐标轴名称和单位。
+atlas_label(ax, text="", data=True, com=13, lumi=140)
+fig.savefig("figure.pdf")
+```
+
+`com` 的单位是 TeV，`lumi` 的单位是 fb⁻¹；以上数值仅示意参数用法，应换成实际数据集信息。纯模拟图使用 `data=False`，未给出亮度时不添加亮度信息。
+
+标注位置默认是 `loc=4`，其他关键字参数直接交给 `mplhep.atlas.label`。例如可为某张图写 `atlas_label(ax, text="", data=False, com=13, loc=1, fontsize=16)`，无需修改公共风格代码。
+
+一次设置全局覆盖，也可以在单次绘制或绘制后手动调整：
+
+```python
+from plotting import use_atlas_style, artist_style
+
+use_atlas_style(rc={"axes.labelsize": 18, "legend.fontsize": 12})
+fig, ax = plt.subplots(figsize=(9, 6))
+points = ax.errorbar(x, observed, yerr=error, **artist_style("data"))
+signal_line = ax.stairs(
+    signal, edges,
+    **artist_style("signal", color="#0072B5", linewidth=2.5, linestyle="-"),
+)
+signal_line.set_linewidth(3)  # 原生 setter 仍有最终决定权。
+ax.set_ylim(0, 200)
+ax.legend(loc="upper left")
+fig.savefig("figure.pdf")
+```
+
+`data` 预设用于 `errorbar` / `plot`；`prediction`、`signal`、`alternative` 用于 `plot` / `stairs`；`background`、`uncertainty` 用于 `stairs` / `fill_between`。这些 kwargs 与原生函数参数一致；`scatter` 的点面积使用 `s`，可直接按原生接口指定。背景填充仍需向 `stairs` 显式传 `fill=True`，基线和堆叠顺序由调用者指定。
+
+Notebook 或只希望临时应用风格时，用局部上下文，退出后恢复周围的 rc 设置：
+
+```python
+from plotting import atlas_style
+
+with atlas_style(rc={"axes.labelsize": 18}):
+    fig, ax = plt.subplots()
+    ax.plot(x, y, linewidth=3)  # 这里继续使用原生参数。
+    fig.savefig("figure.pdf")
+```
+
+## 默认颜色
+
+配色参考了 Nature 已发表 ATLAS 图的视觉层次，并核对了 ggsci 对 NPG、AAAS、NEJM 配色的整理。当前强调色选用 [ggsci NEJM](https://nanx.me/ggsci/reference/pal_nejm.html) 前五色，按蓝、红、绿、橙、紫重排。ggsci 明确将这些方案称为期刊图启发的配色；它们不是期刊或 ATLAS 的统一强制色板。
+
+面积填充与强调曲线分别定义。同一类别的填充、边线共用色相，类别之间仍保持区分。填充由 **45% 原色与 55% 白色**预先混合，使用不透明色绘制，使原生 ROOT 的累积填充和 Matplotlib 堆叠保持一致。数据点保留黑色，不确定度带保留中性灰。这是本项目的设计选择，可用原生接口逐图覆盖。
+
+| 用途 | Python 键 | ROOT 强调色函数 | 强调色 | 面积填充色 |
+| --- | --- | --- | --- | --- |
+| 数据点 | `data` | `AtlasColors::Data()` | `#000000` | - |
+| 名义预测或总预测 | `prediction` | `AtlasColors::Prediction()` | `#303030` | `#A2A2A2` |
+| 额外叠加的信号曲线 | `signal` | `AtlasColors::Signal()` | `#BC3C29` | `#E1A79F` |
+| 单个背景的默认首色 | `background` | `AtlasColors::Background()` | `#0072B5` | `#8CC0DE` |
+| 替代模型或对比曲线 | `alternative` | `AtlasColors::Alternative()` | `#7876B1` | `#C2C1DC` |
+| 不确定度带 | `uncertainty` | `AtlasColors::Uncertainty()` | `#999999` | - |
+| 参考线 | `reference` | `AtlasColors::Reference()` | `#404040` | - |
+| 附加说明文字 | `annotation` | `AtlasColors::Annotation()` | `#444444` | - |
+
+```python
+from plotting import COLORS, FILL_COLORS, SERIES_COLORS, SERIES_FILL_COLORS
+
+ax.plot(x, prediction, color=COLORS["prediction"])
+ax.plot(x, alternative, color=COLORS["alternative"], linestyle="--")
+ax.stairs(values, edges, fill=True,
+          facecolor=FILL_COLORS["background"], edgecolor=COLORS["background"])
+```
+
+原生 ROOT 可直接写 `hist.SetLineColor(AtlasColors::Prediction())` 和 `hist.SetFillColor(AtlasColors::PredictionFill())`；PyROOT 对应 `ROOT.AtlasColors.Prediction()`、`ROOT.AtlasColors.PredictionFill()`。多个系列的强调色可用 `SERIES_COLORS[i]` 或 `AtlasColors::Series(i)`，填充色用 `SERIES_FILL_COLORS[i]` 或 `AtlasColors::SeriesFill(i)`。五个强调色依次为 `#0072B5`、`#BC3C29`、`#20854E`、`#E18727`、`#7876B1`；橙色的填充为 `#F2C99E`。ROOT 的系列函数按五色循环，不会改变二维图的连续色标。
+
+多个物理过程的“进程 → 颜色”映射由具体分析固定，保证同一过程跨图颜色一致。总预测使用中性深灰线，与背景过程的五色循环分开；综合样图不再把背景 A 借称为 `prediction`。超过五个系列时应结合不同线型、标记或分面来区分。Python 与 C++ 保留两份简短的原生定义，修改默认值时需同步维护；当前已逐项核对 RGB 一致。
+
+## 复用边界
+
+- 各分析脚本直接创建和操作原生 `Figure` / `Axes` 或 `TCanvas` / `TPad`；风格层提供默认设置和可选的小函数。
+- 先应用风格，再创建绘图对象；单图的尺寸、坐标范围、图例位置和布局由脚本调整，导出时不重新应用风格。
+- 默认值不会锁定对象属性。Matplotlib 单次 kwargs、原生 setter 和 ROOT `Set...` 方法都可以覆盖；ROOT 入口不自动开启 `ForceStyle`，不要求读取的对象放弃原有样式。
+- 标注函数保留原生返回对象，便于继续调整。Matplotlib 标注的额外参数直接传递给 mplhep，不另建一套配置字段。
+- 数据生产、直方图处理与图形排版分别复用；新增图型先写成可编辑的示例，稳定且重复的局部操作再提取为函数。
+
+## ROOT / PyROOT
+
+激活已有的 ROOT 环境后，在仓库根目录运行 C++ 示例：
+
+```bash
+root -l -b -q examples/atlas_root.C
+```
+
+示例使用 ROOT 的 `EmbedFonts` 导出选项，需要 `gs`（Ghostscript）可执行文件在 PATH 中。
+
+自己的 C++ 宏包含头文件后，先调用 `SetAtlasStyle()`，再创建 Canvas 和绘图对象。用 `AtlasLabel(0.20, 0.89)` 绘制 ATLAS 标识，或用第三个参数设置 `"Simulation"` 等说明。坐标为 pad 的 NDC 坐标，标签顶部对齐。
+
+`SetAtlasStyle()` 返回原生 `TStyle*`；可先调整全局默认值，再创建对象。已有对象的属性由各自的 setter 调整：
+
+```cpp
+auto* style = SetAtlasStyle();
+style->SetLegendTextSize(0.035);  // 在创建图例之前调整全局默认值。
+
+// sample、signal 和 background 均为调用者自己的 TH1 / TGraph 对象。
+AtlasStyle::Data(sample);
+AtlasStyle::Signal(signal);
+signal.SetLineStyle(1);          // 覆盖预设：本图改成实线。
+signal.SetLineWidth(4);
+AtlasStyle::Background(background, 2);
+```
+
+对象预设还包括 `Prediction`、`Alternative`、`Uncertainty`、`UncertaintyShade`、`Reference`、`Annotation` 和 `Legend`。PyROOT 可直接调用，例如 `ROOT.AtlasStyle.Signal(signal)` 后继续 `signal.SetLineStyle(1)`。这些函数不接管对象生命周期、绘制选项或保存流程；若显式选择对象预设，仍应将本图的手动调整写在它之后。
+
+PyROOT 推荐使用统一入口自动定位头文件；无需根据工作目录构造路径：
+
+```python
+import ROOT
+from plotting import use_root_style
+
+use_root_style()
+canvas = ROOT.TCanvas("canvas", "", 800, 600)
+# 在这里绘制自己的数据。
+ROOT.AtlasLabel(0.20, 0.89)
+canvas.Print("figure.pdf", "EmbedFonts")
+```
+
+## 标注与导出
+
+- 发表版本的基本标识使用 `ATLAS`；模拟图通过参数添加 `Simulation`。`Internal`、`Preliminary` 等状态由调用者按实际用途明确设置，风格入口不会自动追加。
+- ROOT 中 `ATLAS` 用字体 72，其他文字用字体 42；Matplotlib 采用 Arial TrueType，并由 `mplhep` 处理标注排版。
+- 正文图优先保存为矢量 PDF。Matplotlib 设置 PDF/PS TrueType 字体嵌入；ROOT 示例用原生 `EmbedFonts` 选项嵌入字体。
+- Matplotlib 示例同时生成 PNG。ROOT 示例生成 PDF；本机 ROOT 的 PNG 库缺少 `libjpeg.8.dylib`，因此预览 PNG 从 PDF 另行渲染。渲染 ROOT PDF 时使用 CropBox，例如 Ghostscript 的 `-dUseCropBox`，避免把纸张区域当作图的边界。
+- 示例数据均为 toy 数据，只用于检查样式；排版时仍需按最终图宽检查标签、图例及误差条的可读性。
+
+## Sources
+
+核对日期：2026-10-29。
+
+- [ATLAS PubCom plot style](https://twiki.cern.ch/twiki/bin/view/AtlasProtected/PubComPlotStyle)：完整规范需要 CERN 登录，本次未读取其受限正文；本目录不声称已通过最新 PubCom 的完整核验。
+- [ATLAS 公开 ROOT 样式参数](https://atlas-sw-doxygen.web.cern.ch/atlas-sw-doxygen/atlas_main--Doxygen/docs/html/da/d4a/Trigger_2TrigAnalysis_2TrigInDetAnalysisUser_2Analysis_2src_2AtlasStyle_8h.html)：ROOT 基础参数的参考。本项目头文件为整理实现，并非官方宏的原样副本；去除了来源分析包自身的配色设置，补充无边框图例和标注入口。
+- [mplhep styling](https://scikit-hep.org/mplhep/1.1/guide_styling/)：Matplotlib ATLAS 样式及标注接口。
+- [ROOT text attributes](https://root.cern.ch/doc/master/classTAttText.html)：ROOT 字体编号和尺寸约定。
+- [ATLAS JHEP 08 (2024) 182](https://arxiv.org/abs/2406.19701v2)：已发表论文及 Figure 1 的视觉参考。
+- [ROOT 原生字体嵌入选项](https://root.cern.ch/doc/master/TPad_8cxx_source.html)：`Print(..., "EmbedFonts")` 的行为及 Ghostscript 依赖。
+- [ROOT ratio 示例](https://root.cern.ch/doc/master/ratioplot_8C.html)：多 pad 的原生轴设置，以及用字体精度 3 保持像素字号。
+- [Nature 607, 52-59 (2022)](https://www.nature.com/articles/s41586-022-04893-w)，Figure 2：查看黑色数据点、模型线、误差带和分类颜色的层次。
+- [Nature 633, 542-547 (2024)](https://www.nature.com/articles/s41586-024-07824-z)，Figure 2：查看数据、模型和不确定度分别承担的视觉角色。这里借鉴视觉层次，未复制其测量值或声称取得官方图形认证。
+- [Nature artwork guide](https://www.nature.com/documents/nature-final-artwork.pdf)：出版尺寸、可编辑矢量图及色彩空间的说明。
+- [ggsci 期刊启发配色说明](https://nanx.me/ggsci/articles/ggsci.html)、[NEJM 原色数据](https://github.com/nanxstats/ggsci/blob/master/R/palettes.R)：强调色的直接出处；浅填充混色比例是本项目选择。
+
+## 验证范围
+
+完成可编辑安装后，在仓库根目录运行 `python -m unittest discover -s tests -v`。没有安装的后端会明确跳过对应测试；基础导入与头文件定位检查不依赖任何后端。
+
+- Matplotlib 示例及颜色卡已在临时 Python 3.12.14 环境中运行，使用 Matplotlib 3.11.2、mplhep 1.3.3、mplhep-data 0.1.0；没有改动系统 Python。
+- 已渲染并查看 Matplotlib 的 PDF，检查了标注、图例、轴标题、误差带和留白；确认嵌入字体为实际 TrueType 数据，渲染器不再报告字体类型不匹配。
+- 数据图标注另行检查了 `text=""`、`data=True`、实际传入的能量和亮度；没有自动附加模拟或草稿状态。
+- 已在 conda base 的 ROOT 6.38.04 环境运行 C++ 示例，并通过 PyROOT 加载头文件，逐项核对所有具名强调色、面积填充色及系列循环的 RGB 值；Python 与 ROOT 一致。
+- ROOT 示例的 Helvetica 字体族已嵌入 PDF，按 CropBox 渲染后检查了标注、图例、误差带和图的边界；渲染器没有字体格式警告。此前看到的整页留白来自按 MediaBox 预览，实际图的 CropBox 比例正常。
+- 综合样图的两个后端均已运行并逐页查看 PDF 渲染结果；确认五个主色同时出现、上下原生面板分别为对数和线性坐标。两套综合 PDF 都为单页矢量图，字体已嵌入；共享输入为 16 个等宽 bin，预测和 toy 计数均为正，比值及统计误差有限。
+- 默认值整理后，检查了 Matplotlib 的全局 rc 覆盖、对象 kwargs 覆盖、原生 setter、预设字典独立性，以及正常和异常退出时的局部上下文恢复；C++ / PyROOT 对象预设已编译运行，确认原生 setter 可覆盖且入口未开启 `ForceStyle`。两端额外检查了 PDF 导出前后手动颜色、线型和线宽保持不变；ROOT 图例预设也保留调用者对全局字号的调整。
+- `0.1.0` 封装已在项目目录之外验证：无绘图后端的独立环境可导入基础包并定位头文件；安装 wheel 后的 Matplotlib 与 ROOT API 检查通过，可编辑安装也可自动定位源码中的头文件。C++ 宏通过 `ROOT_INCLUDE_PATH` 使用安装包中的头文件运行，不依赖 Python 后端初始化。具备两种后端的环境中，五项自动检查全部通过。

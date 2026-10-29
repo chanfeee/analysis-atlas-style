@@ -1,0 +1,6 @@
+__pycache__/
+examples/output/
+build/
+dist/
+*.egg-info/
+.DS_Store
