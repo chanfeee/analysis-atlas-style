@@ -20,36 +20,82 @@ python -m pip install -e '.[mpl]'
 
 只使用 ROOT / PyROOT 时安装基础包即可：`python -m pip install -e .`。基础包没有 Matplotlib 或 PyROOT 安装依赖；ROOT 由现有 ROOT 环境提供，只有调用 `use_root_style()` 时才加载 PyROOT。导入 `plotting` 本身不加载后端，也不修改全局绘图设置。
 
-如果本包位于另一个项目的 `plotting/` 子目录，在外层项目目录使用 `python -m pip install -e './plotting[mpl]'` 即可。下文命令均以本包自己的仓库根目录为工作目录。
+如果本包位于另一个项目的 `plotting/` 子目录，在外层项目目录使用 `python -m pip install -e './plotting[mpl]'` 即可。源码示例、测试和构建命令以本包的仓库根目录为工作目录；下方跨项目安装命令可在任意目录执行。
 
-在其他分析目录可使用本目录的绝对路径安装。安装后不依赖当前工作目录，也不需要添加 `sys.path`：
+### 跨项目安装
+
+在每个分析项目使用的 Python / conda 环境中安装一次，之后即可从任意分析目录直接 `import plotting`，无需复制风格文件或添加 `sys.path`。安装时使用的 `python` 应与运行分析脚本时一致。
+
+本机可直接以绝对路径复用当前源码；编辑式安装会跟随该目录中的风格修改：
+
+```bash
+python -m pip install -e '/absolute/path/to/style-repository[mpl]'
+```
+
+若源码位于其他位置，将上述绝对路径替换为实际源码目录。其他机器也可直接从私有 GitHub 仓库安装，需要已有该仓库的 SSH 访问权限：
+
+```bash
+python -m pip install 'analysis-atlas-style[mpl] @ git+ssh://git@github.com/chanfeee/analysis-atlas-style.git'
+```
+
+两种方式任选其一。`[mpl]` 会安装 Matplotlib 相关依赖；只使用 ROOT / PyROOT 时可去掉 `[mpl]`，ROOT 环境仍由调用者提供。
+
+### Matplotlib 最小示例
+
+下面的代码可直接放进其他分析项目的 Python 脚本中运行，使用 toy 数据并输出 `mpl_example.pdf`：
 
 ```python
 import matplotlib.pyplot as plt
 from plotting import use_atlas_style, artist_style, atlas_label
 
-use_atlas_style()
+use_atlas_style()  # 在创建 Figure 前调用
 fig, ax = plt.subplots()
-ax.stairs([12, 25, 18], [0, 10, 20, 30], label="Toy prediction",
-          **artist_style("prediction"))
-atlas_label(ax, text="", data=False, com=13)
-ax.set(xlabel=r"$m$ [GeV]", ylabel="Events / 10 GeV")
+ax.stairs(
+    [12, 25, 18], [0, 10, 20, 30],  # toy 数据
+    label="Toy prediction",
+    **artist_style("prediction", linewidth=2.5),
+)
+ax.set(xlabel=r"$m$ [GeV]", ylabel="Events / 10 GeV", ylim=(0, 40))
+atlas_label(ax, text="", data=False, com=13)  # 能量仅为示例
 ax.legend()
-fig.savefig("figure.pdf")
+
+fig.savefig("mpl_example.pdf")
+plt.close(fig)
 ```
 
-PyROOT 的初始化只需一行；函数返回原生 `TStyle*`：
+默认字体为 Arial；没有该字体时，可通过 `use_atlas_style(font="Liberation Sans")` 显式选择已安装的兼容 TrueType 字体。
+
+### ROOT / PyROOT 最小示例
+
+在能够 `import ROOT` 的 Python 环境中运行。`use_root_style()` 自动加载随包分发的 C++ 头文件，返回原生 `TStyle*`。下面使用相同的 toy 数据输出 `root_example.pdf`；`EmbedFonts` 导出选项需要 `gs`（Ghostscript）在 PATH 中：
 
 ```python
 import ROOT
 from plotting import use_root_style
 
-style = use_root_style()
+ROOT.gROOT.SetBatch(True)
+use_root_style()  # 自动加载头文件，并在创建绘图对象前应用默认值
+
 canvas = ROOT.TCanvas("canvas", "", 800, 600)
-hist = ROOT.TH1D("hist", ";x;Events", 10, 0, 10)
-ROOT.AtlasStyle.Signal(hist)
-hist.SetLineWidth(4)  # 手动设置保持优先。
+hist = ROOT.TH1D("hist", ";m [GeV];Events / 10 GeV", 3, 0, 30)
+hist.SetDirectory(0)
+
+for i, value in enumerate([12, 25, 18], start=1):
+    hist.SetBinContent(i, value)
+
+ROOT.AtlasStyle.Prediction(hist)
+hist.SetLineWidth(3)  # 手动覆盖预设
+hist.SetMinimum(0)
+hist.SetMaximum(40)
+hist.Draw("HIST")
+ROOT.AtlasLabel(0.20, 0.89, "Simulation")
+
+canvas.Print("root_example.pdf", "EmbedFonts")
 ```
+
+两端都按“先应用风格，再创建对象，最后手动调整”的顺序使用；保存时不会重置手动设置。纯 C++ ROOT 宏的接入方式见下方说明及 [C++ 示例](examples/atlas_root.C)。
+
+### 公开接口
 
 公开接口集中在 `plotting`：
 
@@ -122,7 +168,7 @@ python -m plotting.examples.showcase_mpl
 root -l -b -q examples/showcase_root.C
 ```
 
-输出在 `examples/output/showcase_mpl.pdf`、`showcase_mpl.png` 及 `showcase_root.pdf`。ROOT 示例需先按下文激活 conda base，并保证 Ghostscript 在 PATH 中。两套示例使用同一份固定输入；所有数值均为 toy 示例，信号曲线明确放大四倍。下方面板的数据误差为 `sqrt(toy_sample) / nominal`，预测相对误差另画为围绕 1 的带，两者未合并为一种误差。
+输出在 `examples/output/showcase_mpl.pdf`、`showcase_mpl.png` 及 `showcase_root.pdf`。ROOT 示例需先激活已有的 ROOT 环境，并保证 Ghostscript 在 PATH 中。两套示例使用同一份固定输入；所有数值均为 toy 示例，信号曲线明确放大四倍。下方面板的数据误差为 `sqrt(toy_sample) / nominal`，预测相对误差另画为围绕 1 的带，两者未合并为一种误差。
 
 需要 ROOT 的 PNG 预览时，可使用已安装的 Ghostscript 从 PDF 生成：
 
@@ -277,18 +323,7 @@ AtlasStyle::Background(background, 2);
 
 对象预设还包括 `Prediction`、`Alternative`、`Uncertainty`、`UncertaintyShade`、`Reference`、`Annotation` 和 `Legend`。PyROOT 可直接调用，例如 `ROOT.AtlasStyle.Signal(signal)` 后继续 `signal.SetLineStyle(1)`。这些函数不接管对象生命周期、绘制选项或保存流程；若显式选择对象预设，仍应将本图的手动调整写在它之后。
 
-PyROOT 推荐使用统一入口自动定位头文件；无需根据工作目录构造路径：
-
-```python
-import ROOT
-from plotting import use_root_style
-
-use_root_style()
-canvas = ROOT.TCanvas("canvas", "", 800, 600)
-# 在这里绘制自己的数据。
-ROOT.AtlasLabel(0.20, 0.89)
-canvas.Print("figure.pdf", "EmbedFonts")
-```
+PyROOT 推荐使用统一入口 `use_root_style()` 自动定位头文件，无需根据工作目录构造路径；完整可运行的用法见上文“ROOT / PyROOT 最小示例”。
 
 ## 标注与导出
 
