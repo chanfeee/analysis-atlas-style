@@ -6,27 +6,21 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import numpy as np
 
-from ana_atlas_style import artist_style, atlas_label, use_atlas_style
+from ana_atlas_style import artist_style, atlas_label, use_style
 
 
 def main():
-    use_atlas_style()
-    edges = np.arange(60, 221, 10)
+    use_style("mpl")
+    bins = np.loadtxt(Path(__file__).with_name("stack8_inputs.dat"))
+    edges = np.r_[bins[:, 0], bins[-1, 1]]
     centers = (edges[:-1] + edges[1:]) / 2
-    x = (centers - edges[0]) / (edges[-1] - edges[0])
     labels = (
         r"$t\bar{t}$", r"$W$+jets", r"$Z$+jets", "Single top", "Diboson",
         r"$t\bar{t}+V$", "Multijet", "Other",
     )
-    fractions = np.diff([0, 0.045, 0.075, 0.12, 0.19, 0.30, 0.47, 0.70, 1])
-    components = 2700 * fractions[::-1, None] * np.exp(
-        -(2.4 + 0.5 * np.linspace(-1, 1, 8)[:, None]) * x
-    )
+    components = bins[:, 2:10].T
     nominal = components.sum(axis=0)
-    observed = np.random.default_rng(42).poisson(nominal)
-    relative_unc = 0.06 + 0.02 * x
-    alternate_ratio = 1 + 0.06 * np.sin(1.2 * np.pi * x)
-    signal = 9 + 44 * np.exp(-0.5 * ((centers - 130) / 14) ** 2)
+    observed, signal, relative_unc, alternate_ratio = bins[:, 10:].T
 
     fig, (ax, ratio) = plt.subplots(
         2, 1, figsize=(8.8, 7.8), sharex=True,
@@ -75,7 +69,7 @@ def main():
     ratio.errorbar(centers, observed / nominal, yerr=np.sqrt(observed) / nominal,
                    **artist_style("data"))
     ratio.set(xlabel=r"$m_{jj}$ [GeV]", ylim=(0.7, 1.3))
-    ratio.set_ylabel("Pseudo-data / Pred.", fontsize=12, loc="center")
+    ratio.set_ylabel("Data / Pred.", fontsize=12, loc="center")
     ratio.yaxis.set_major_locator(MultipleLocator(0.2))
     ratio.yaxis.set_minor_locator(MultipleLocator(0.1))
     ratio.xaxis.set_major_locator(MultipleLocator(20))

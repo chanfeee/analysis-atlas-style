@@ -5,11 +5,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ana_atlas_style import artist_style, matrix_style, use_atlas_style
+from ana_atlas_style import artist_style, matrix_style, use_style
 
 
 def main():
-    use_atlas_style(rc={
+    use_style("mpl", rc={
         "axes.labelsize": 12, "axes.titlesize": 13, "legend.fontsize": 9,
         "xtick.labelsize": 10, "ytick.labelsize": 10,
     })

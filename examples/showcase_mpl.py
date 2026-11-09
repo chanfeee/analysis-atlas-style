@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import numpy as np
 
-from ana_atlas_style import artist_style, atlas_label, use_atlas_style
+from ana_atlas_style import artist_style, atlas_label, use_style
 
 
 def make_figure():
-    use_atlas_style()
+    use_style("mpl")
     inputs = Path(__file__).with_name("showcase_inputs.dat")
     low, high, a, b, c, signal, sample, uncertainty, alternative = np.loadtxt(
         inputs, unpack=True

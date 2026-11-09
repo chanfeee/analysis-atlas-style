@@ -16,8 +16,23 @@ from .root import root_include_dir, use_root_style
 
 __version__ = "0.2.0"
 
+
+def use_style(backend="mpl", **options):
+    """Apply ATLAS defaults before creating native drawing objects.
+
+    The Matplotlib backend accepts font and rc options. ROOT returns a TStyle
+    that the caller can customize directly.
+    """
+    if backend == "mpl":
+        return use_atlas_style(**options)
+    if backend == "root":
+        return use_root_style(**options)
+    raise ValueError(f"Unknown style backend {backend!r}; choose 'mpl' or 'root'")
+
+
 __all__ = [
     "__version__",
+    "use_style",
     "use_atlas_style",
     "atlas_style",
     "atlas_label",

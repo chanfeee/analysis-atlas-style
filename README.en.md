@@ -35,9 +35,9 @@ Choose one command. Omit `[mpl]` for ROOT-only use. If the source is in a `plott
 
 ```python
 import matplotlib.pyplot as plt
-from ana_atlas_style import use_atlas_style, artist_style, atlas_label
+from ana_atlas_style import use_style, artist_style, atlas_label
 
-use_atlas_style()
+use_style("mpl")
 fig, ax = plt.subplots()
 ax.stairs(
     [12, 25, 18], [0, 10, 20, 30],
@@ -52,18 +52,18 @@ fig.savefig("mpl_example.pdf")
 plt.close(fig)
 ```
 
-The default font is Arial. To use an installed compatible TrueType font, pass `use_atlas_style(font="Liberation Sans")`.
+The default font is Arial. To use an installed compatible TrueType font, pass `use_style("mpl", font="Liberation Sans")`.
 
 ### Minimal PyROOT example
 
-Run this where `import ROOT` works and Ghostscript (`gs`) is on PATH. `use_root_style()` loads the bundled C++ headers and returns a native `TStyle*`.
+Run this where `import ROOT` works and Ghostscript (`gs`) is on PATH. `use_style("root")` loads the bundled C++ headers and returns a native `TStyle*`.
 
 ```python
 import ROOT
-from ana_atlas_style import use_root_style
+from ana_atlas_style import use_style
 
 ROOT.gROOT.SetBatch(True)
-use_root_style()
+use_style("root")
 
 canvas = ROOT.TCanvas("canvas", "", 800, 600)
 hist = ROOT.TH1D("hist", ";m [GeV];Events / 10 GeV", 3, 0, 30)
@@ -86,23 +86,33 @@ Apply the global style before creating objects. Apply optional presets, then cus
 
 ### Upgrading from 0.1.0
 
-Reinstall the package and replace Python imports of `plotting` with `ana_atlas_style`. In C++, use `ana_atlas_style::SetAtlasStyle()`, `ana_atlas_style::AtlasLabel()` and `ana_atlas_style::Prediction(hist)`. Color functions live in `ana_atlas_style::colors`. In PyROOT, use `ROOT.ana_atlas_style`.
+Reinstall the package and replace Python imports of `plotting` with `ana_atlas_style`. In C++, use `ana_atlas_style::use_style()`, `ana_atlas_style::AtlasLabel()` and `ana_atlas_style::Prediction(hist)`. Color functions live in `ana_atlas_style::colors`. In PyROOT, use `ROOT.ana_atlas_style`.
 
 ## Public API
 
 | Python API | Purpose |
 | --- | --- |
-| `use_atlas_style(font="Arial", rc=None)` | Apply global Matplotlib defaults |
+| `use_style("mpl", font="Arial", rc=None)` | Apply global Matplotlib defaults |
 | `atlas_style(font="Arial", rc=None)` | Apply defaults temporarily and restore the surrounding rc settings on exit |
 | `artist_style(role, index=0, **overrides)` | Return fresh native drawing keyword arguments |
 | `matrix_style(kind="density", **overrides)` | Return color scale arguments for two-dimensional plots |
 | `atlas_label(ax, text=..., data=..., com=..., lumi=None, **kwargs)` | Add an ATLAS label with optional dataset information |
-| `use_root_style()` | Load the bundled headers and apply the ROOT defaults |
+| `use_style("root")` | Load the bundled headers, apply the ROOT defaults and return a `TStyle*` |
 | `root_include_dir()` | Return the C++ header directory as a `Path` |
 | `COLORS`, `FILL_COLORS`, `SERIES_COLORS`, `SERIES_FILL_COLORS` | Named role colors and general-purpose series colors |
 | `BACKGROUND_COLORS`, `BACKGROUND_FILL_COLORS` | MC background outlines and fills |
 
 For ATLAS labels, `com` is in TeV and `lumi` in fb⁻¹. Use `data=False` for simulation. The default label location is `loc=4`. Extra keyword arguments are passed to `mplhep.atlas.label`.
+
+Python examples use `use_style` for both backends. The existing `use_atlas_style()`, `use_root_style()` and C++ `SetAtlasStyle()` entry points remain available.
+
+| Operation | Matplotlib | PyROOT | C++ ROOT |
+| --- | --- | --- | --- |
+| Initialize | `use_style("mpl")` | `use_style("root")` | `ana_atlas_style::use_style()` |
+| Pick a background color | `artist_style("background", index=i)` | `ROOT.ana_atlas_style.Background(hist, i)` | `ana_atlas_style::Background(hist, i)` |
+| Add an ATLAS label | `atlas_label(ax, ...)` | `ROOT.ana_atlas_style.AtlasLabel(x, y, ...)` | `ana_atlas_style::AtlasLabel(x, y, ...)` |
+
+Matplotlib presets return native keyword arguments. ROOT presets set attributes on native objects. Both allow manual overrides after applying defaults.
 
 ## C++ ROOT and distribution
 
@@ -120,7 +130,7 @@ Add that directory to the include path, then include `AtlasStyle.h`. You can als
 #include "AtlasStyle.h"
 
 // In your macro, before creating the canvas and plot objects:
-auto* style = ana_atlas_style::SetAtlasStyle();
+auto* style = ana_atlas_style::use_style();
 style->SetLegendTextSize(0.035);
 
 // After creating the histogram:
@@ -179,7 +189,19 @@ The MC stack uses the five exact reference colors, plus sage, muted gold and lil
 | 6 | Lilac | `#AB99C6` | `#AB99C6` |
 | 7 | Warm ivory | `#F2E8E3` | `#F2E8E3` |
 
-Run `python -m ana_atlas_style.examples.stack8_mpl` from an editable checkout to reproduce the eight-layer toy stack. [PNG preview](docs/stack8_mpl.png) · [Vector PDF](docs/stack8_mpl.pdf)
+The eight-layer examples share the binning, backgrounds, signal, pseudo-data and relative uncertainty. The ratio points have errors of `sqrt(pseudo_data) / prediction`, and the prediction uncertainty is drawn as a separate band around 1. [Shared toy inputs](examples/stack8_inputs.dat)
+
+```bash
+python -m ana_atlas_style.examples.stack8_mpl
+root -l -b -q examples/stack8_root.C
+```
+
+Run both commands from an editable checkout. ROOT needs Ghostscript to embed fonts. Outputs are under `examples/output/`.
+
+| Backend | Example figures | Source |
+| --- | --- | --- |
+| Matplotlib | [PNG](docs/stack8_mpl.png) · [Vector PDF](docs/stack8_mpl.pdf) | [Python](examples/stack8_mpl.py) |
+| ROOT | [PNG](docs/stack8_root.png) · [Vector PDF](docs/stack8_root.pdf) | [C++ macro](examples/stack8_root.C) |
 
 Use `artist_style("background", index=i)` or `ana_atlas_style::Background(hist, i)` for both fill and outline. Use `BACKGROUND_COLORS[i]`, `BACKGROUND_FILL_COLORS[i]` or the C++ `colors::Background(i)` and `colors::BackgroundFill(i)` for direct access. Keep a stable process-to-index mapping in each analysis.
 

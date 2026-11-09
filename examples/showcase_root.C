@@ -18,7 +18,7 @@
 // Native ROOT counterpart of showcase_mpl.py; same toy inputs and ratios.
 void showcase_root()
 {
-    ana_atlas_style::SetAtlasStyle();
+    ana_atlas_style::use_style();
     const TString source = TString(gSystem->DirName(__FILE__)) + "/showcase_inputs.dat";
     std::ifstream input(source.Data());
     if (!input) throw std::runtime_error("Cannot open showcase_inputs.dat");

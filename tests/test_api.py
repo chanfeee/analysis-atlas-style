@@ -18,6 +18,7 @@ class PublicAPITests(unittest.TestCase):
                 "import sys, ana_atlas_style; "
                 "assert not {'matplotlib', 'mplhep', 'ROOT'} & sys.modules.keys(); "
                 "assert callable(ana_atlas_style.artist_style); "
+                "assert callable(ana_atlas_style.use_style); "
                 "assert callable(ana_atlas_style.use_root_style)"
             )],
             capture_output=True, text=True, check=False,
@@ -43,6 +44,11 @@ class MatplotlibTests(unittest.TestCase):
         import matplotlib.pyplot as plt
 
         before = copy.deepcopy(dict(mpl.rcParams))
+        try:
+            ana_atlas_style.use_style("mpl", rc={"lines.linewidth": 3.25})
+            self.assertEqual(mpl.rcParams["lines.linewidth"], 3.25)
+        finally:
+            mpl.rcParams.update(before)
         with ana_atlas_style.atlas_style(rc={"lines.linewidth": 3.25}):
             fig, ax = plt.subplots()
             try:
@@ -78,10 +84,11 @@ class RootTests(unittest.TestCase):
         original_style = ROOT.gStyle
         original_force = ROOT.gROOT.GetForceStyle()
         self.addCleanup(original_style.cd)
-        style = ana_atlas_style.use_root_style()
+        style = ana_atlas_style.use_style("root")
         self.assertEqual(style.GetName(), "ana_atlas_style")
         self.assertEqual(ROOT.gROOT.GetForceStyle(), original_force)
         self.assertEqual(ROOT.addressof(ana_atlas_style.use_root_style()), ROOT.addressof(style))
+        self.assertEqual(ROOT.addressof(ROOT.ana_atlas_style.SetAtlasStyle()), ROOT.addressof(style))
 
         graph = ROOT.TGraphErrors(1)
         ROOT.ana_atlas_style.Signal(graph)

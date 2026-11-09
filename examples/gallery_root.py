@@ -5,12 +5,12 @@ from pathlib import Path
 
 import ROOT
 
-from ana_atlas_style import use_root_style
+from ana_atlas_style import use_style
 
 
 def main():
     ROOT.gROOT.SetBatch(True)
-    use_root_style()
+    use_style("root")
     output = Path(__file__).resolve().parent / "output"
     output.mkdir(exist_ok=True)
 

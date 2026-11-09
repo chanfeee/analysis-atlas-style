@@ -20,7 +20,7 @@ Matplotlib 使用 `mplhep` 的 ATLAS 样式；ROOT 使用按公开 ATLAS 样式�
 python -m pip install -e '.[mpl]'
 ```
 
-只使用 ROOT / PyROOT 时执行 `python -m pip install -e .`。ROOT 由现有环境提供，调用 `use_root_style()` 时才加载 PyROOT。导入 `ana_atlas_style` 本身不会加载后端或修改全局绘图设置。
+只使用 ROOT / PyROOT 时执行 `python -m pip install -e .`。ROOT 由现有环境提供，调用 `use_style("root")` 时才加载 PyROOT。导入 `ana_atlas_style` 本身不会加载后端或修改全局绘图设置。
 
 如果本包位于另一个项目的 `plotting/` 子目录，在外层项目目录使用 `python -m pip install -e './plotting[mpl]'` 即可。源码示例、测试和构建命令以本包的仓库根目录为工作目录；下方跨项目安装命令可在任意目录执行。
 
@@ -48,9 +48,9 @@ python -m pip install 'analysis-atlas-style[mpl] @ git+ssh://git@github.com/chan
 
 ```python
 import matplotlib.pyplot as plt
-from ana_atlas_style import use_atlas_style, artist_style, atlas_label
+from ana_atlas_style import use_style, artist_style, atlas_label
 
-use_atlas_style()  # 在创建 Figure 前调用
+use_style("mpl")  # 在创建 Figure 前调用
 fig, ax = plt.subplots()
 ax.stairs(
     [12, 25, 18], [0, 10, 20, 30],  # toy 数据
@@ -65,18 +65,18 @@ fig.savefig("mpl_example.pdf")
 plt.close(fig)
 ```
 
-默认字体为 Arial；没有该字体时，可通过 `use_atlas_style(font="Liberation Sans")` 显式选择已安装的兼容 TrueType 字体。
+默认字体为 Arial；没有该字体时，可通过 `use_style("mpl", font="Liberation Sans")` 显式选择已安装的兼容 TrueType 字体。
 
 ### ROOT / PyROOT 最小示例
 
-在能够 `import ROOT` 的 Python 环境中运行。`use_root_style()` 自动加载随包分发的 C++ 头文件，返回原生 `TStyle*`。下面使用相同的 toy 数据输出 `root_example.pdf`；`EmbedFonts` 导出选项需要 `gs`（Ghostscript）在 PATH 中：
+在能够 `import ROOT` 的 Python 环境中运行。`use_style("root")` 自动加载随包分发的 C++ 头文件，返回原生 `TStyle*`。下面使用相同的 toy 数据输出 `root_example.pdf`；`EmbedFonts` 导出选项需要 `gs`（Ghostscript）在 PATH 中：
 
 ```python
 import ROOT
-from ana_atlas_style import use_root_style
+from ana_atlas_style import use_style
 
 ROOT.gROOT.SetBatch(True)
-use_root_style()  # 自动加载头文件，并在创建绘图对象前应用默认值
+use_style("root")  # 自动加载头文件，并在创建绘图对象前应用默认值
 
 canvas = ROOT.TCanvas("canvas", "", 800, 600)
 hist = ROOT.TH1D("hist", ";m [GeV];Events / 10 GeV", 3, 0, 30)
@@ -103,17 +103,25 @@ canvas.Print("root_example.pdf", "EmbedFonts")
 
 | 接口 | 用途 |
 | --- | --- |
-| `use_atlas_style(font="Arial", rc=None)` | 应用 Matplotlib 全局默认值 |
+| `use_style("mpl", font="Arial", rc=None)` | 应用 Matplotlib 全局默认值 |
 | `atlas_style(font="Arial", rc=None)` | 临时应用，退出时恢复周围的 rc 设置 |
 | `artist_style(role, index=0, **overrides)` | 返回可手动覆盖的原生绘图参数 |
 | `matrix_style(kind="density", **overrides)` | 返回二维图的色标参数 |
 | `atlas_label(ax, text=..., data=..., com=..., lumi=None, **kwargs)` | 显式添加 ATLAS 与数据集标注 |
-| `use_root_style()` | 加载随包分发的头文件，应用 ROOT 默认值 |
+| `use_style("root")` | 加载随包分发的头文件，应用 ROOT 默认值并返回 `TStyle*` |
 | `root_include_dir()` | 取得 C++ 头文件目录，返回原生 `Path` |
 | `COLORS`、`FILL_COLORS`、`SERIES_COLORS`、`SERIES_FILL_COLORS` | 具名颜色与五色循环 |
 | `BACKGROUND_COLORS`、`BACKGROUND_FILL_COLORS` | MC 背景专用描边与填充色 |
 
-从旧版升级时，重新安装本包，再将 Python 中的 `plotting` 导入改为 `ana_atlas_style`。C++ 的 `SetAtlasStyle`、`AtlasLabel` 和对象预设统一放在 `ana_atlas_style::` 下，颜色函数在 `ana_atlas_style::colors::` 下。PyROOT 使用 `ROOT.ana_atlas_style`。调用者可通过 `rc`、对象 kwargs 和原生 setter 调整默认值。
+Python 统一从 `ana_atlas_style` 导入 `use_style`，用 `"mpl"` 或 `"root"` 选择后端。原有的 `use_atlas_style()`、`use_root_style()` 和 C++ `SetAtlasStyle()` 仍可调用。旧版的 `plotting` 导入需改为 `ana_atlas_style`。
+
+| 操作 | Matplotlib | PyROOT | C++ ROOT |
+| --- | --- | --- | --- |
+| 初始化 | `use_style("mpl")` | `use_style("root")` | `ana_atlas_style::use_style()` |
+| 选本底色 | `artist_style("background", index=i)` | `ROOT.ana_atlas_style.Background(hist, i)` | `ana_atlas_style::Background(hist, i)` |
+| 添加 ATLAS 标注 | `atlas_label(ax, ...)` | `ROOT.ana_atlas_style.AtlasLabel(x, y, ...)` | `ana_atlas_style::AtlasLabel(x, y, ...)` |
+
+Matplotlib 预设返回 kwargs，ROOT 预设设置原生对象属性。两端都可在应用默认值后手动覆盖。C++ 颜色查询在 `ana_atlas_style::colors` 下。
 
 ## C++ 接入与分发
 
@@ -125,7 +133,7 @@ atlas-style --root-include
 atlas-style --version
 ```
 
-将该目录加入包含路径后，在自己的 C++ 宏中直接写 `#include "AtlasStyle.h"`，继续使用原生 `ana_atlas_style::SetAtlasStyle()`、`ana_atlas_style::AtlasLabel()` 与 `ana_atlas_style::Signal(hist)` 等接口。三个头文件也可整体复制给纯 C++ 项目使用，无 Python 运行依赖。
+将该目录加入包含路径后，在自己的 C++ 宏中直接写 `#include "AtlasStyle.h"`，继续使用原生 `ana_atlas_style::use_style()`、`ana_atlas_style::AtlasLabel()` 与 `ana_atlas_style::Signal(hist)` 等接口。三个头文件也可整体复制给纯 C++ 项目使用，无 Python 运行依赖。
 
 构建 wheel 时，在仓库根目录运行 `python -m pip wheel --no-deps . --wheel-dir dist`。将构建出的 wheel 安装到目标环境即可；目标环境需要单独提供相应后端，Matplotlib 依赖也可通过 wheel 的 `[mpl]` extra 安装。构建工具同时支持源码包。
 
@@ -212,15 +220,15 @@ python -m ana_atlas_style.examples.atlas_mpl
 python -m ana_atlas_style.examples.palette
 ```
 
-默认采用 Helvetica 兼容的 Arial TrueType 字体，确保 PDF 字体嵌入的格式正确；macOS 系统提供该字体，包中不分发字体文件。本次检查中，mplhep 自带的 TeX Gyre Heros OpenType 字体在 Type 42 导出下触发了 PDF 字体类型警告，因此这里显式使用 Arial。其他系统需要先注册包含常规、粗体、斜体和粗斜体的 Arial 字体族，或通过 `use_atlas_style(font="Liberation Sans")` 显式选择已安装的兼容 TrueType 字体。缺少指定字体时会直接报错。需要精确复现已验证的依赖版本时，可安装 `python -m pip install -c requirements.txt -e '.[mpl]'`。
+默认采用 Helvetica 兼容的 Arial TrueType 字体，确保 PDF 字体嵌入的格式正确；macOS 系统提供该字体，包中不分发字体文件。本次检查中，mplhep 自带的 TeX Gyre Heros OpenType 字体在 Type 42 导出下触发了 PDF 字体类型警告，因此这里显式使用 Arial。其他系统需要先注册包含常规、粗体、斜体和粗斜体的 Arial 字体族，或通过 `use_style("mpl", font="Liberation Sans")` 显式选择已安装的兼容 TrueType 字体。缺少指定字体时会直接报错。需要精确复现已验证的依赖版本时，可安装 `python -m pip install -c requirements.txt -e '.[mpl]'`。
 
 在自己的绘图脚本中，在创建 Figure 之前应用样式：
 
 ```python
 import matplotlib.pyplot as plt
-from ana_atlas_style import use_atlas_style, atlas_label
+from ana_atlas_style import use_style, atlas_label
 
-use_atlas_style()
+use_style("mpl")
 fig, ax = plt.subplots()
 # 在这里绘制自己的数据，并设置坐标轴名称和单位。
 atlas_label(ax, text="", data=True, com=13, lumi=140)
@@ -234,9 +242,9 @@ fig.savefig("figure.pdf")
 一次设置全局覆盖，也可以在单次绘制或绘制后手动调整：
 
 ```python
-from ana_atlas_style import use_atlas_style, artist_style
+from ana_atlas_style import use_style, artist_style
 
-use_atlas_style(rc={"axes.labelsize": 18, "legend.fontsize": 12})
+use_style("mpl", rc={"axes.labelsize": 18, "legend.fontsize": 12})
 fig, ax = plt.subplots(figsize=(9, 6))
 points = ax.errorbar(x, observed, yerr=error, **artist_style("data"))
 signal_line = ax.stairs(
@@ -279,7 +287,19 @@ with atlas_style(rc={"axes.labelsize": 18}):
 | 6 | 淡紫 | `#AB99C6` | `#AB99C6` |
 | 7 | 暖白 | `#F2E8E3` | `#F2E8E3` |
 
-在可编辑安装的源码目录运行 `python -m ana_atlas_style.examples.stack8_mpl` 可生成八层 toy 堆叠图。[PNG 预览](docs/stack8_mpl.png) · [矢量 PDF](docs/stack8_mpl.pdf)
+八层 MC 堆叠与比值样图使用同一份 toy 输入。两端使用相同的分箱、本底、信号、伪数据和相对不确定度。比值面板的点误差为 `sqrt(pseudo_data) / prediction`，预测不确定度另画为围绕 1 的带。[共享数据](examples/stack8_inputs.dat)
+
+```bash
+python -m ana_atlas_style.examples.stack8_mpl
+root -l -b -q examples/stack8_root.C
+```
+
+在可编辑安装的源码目录运行这些命令。ROOT 的嵌入字体导出需要 Ghostscript，输出位于 `examples/output/`。
+
+| 后端 | 样图 | 源码 |
+| --- | --- | --- |
+| Matplotlib | [PNG](docs/stack8_mpl.png) · [矢量 PDF](docs/stack8_mpl.pdf) | [Python](examples/stack8_mpl.py) |
+| ROOT | [PNG](docs/stack8_root.png) · [矢量 PDF](docs/stack8_root.pdf) | [C++ 宏](examples/stack8_root.C) |
 
 | 用途 | Python 键 | ROOT 强调色函数 | 强调色 | 面积填充色 |
 | --- | --- | --- | --- | --- |
@@ -366,12 +386,12 @@ root -l -b -q examples/atlas_root.C
 
 示例使用 ROOT 的 `EmbedFonts` 导出选项，需要 `gs`（Ghostscript）可执行文件在 PATH 中。
 
-自己的 C++ 宏包含头文件后，先调用 `ana_atlas_style::SetAtlasStyle()`，再创建 Canvas 和绘图对象。用 `ana_atlas_style::AtlasLabel(0.20, 0.89)` 绘制 ATLAS 标识，或用第三个参数设置 `"Simulation"` 等说明。坐标为 pad 的 NDC 坐标，标签顶部对齐。
+自己的 C++ 宏包含头文件后，先调用 `ana_atlas_style::use_style()`，再创建 Canvas 和绘图对象。用 `ana_atlas_style::AtlasLabel(0.20, 0.89)` 绘制 ATLAS 标识，或用第三个参数设置 `"Simulation"` 等说明。坐标为 pad 的 NDC 坐标，标签顶部对齐。
 
-`ana_atlas_style::SetAtlasStyle()` 返回原生 `TStyle*`；可先调整全局默认值，再创建对象。已有对象的属性由各自的 setter 调整：
+`ana_atlas_style::use_style()` 返回原生 `TStyle*`；可先调整全局默认值，再创建对象。已有对象的属性由各自的 setter 调整：
 
 ```cpp
-auto* style = ana_atlas_style::SetAtlasStyle();
+auto* style = ana_atlas_style::use_style();
 style->SetLegendTextSize(0.035);  // 在创建图例之前调整全局默认值。
 
 // sample、signal 和 background 均为调用者自己的 TH1 / TGraph 对象。
@@ -384,7 +404,7 @@ ana_atlas_style::Background(background, 2);
 
 对象预设还包括 `Prediction`、`Alternative`、`Uncertainty`、`UncertaintyShade`、`Reference`、`Annotation` 和 `Legend`。PyROOT 可直接调用，例如 `ROOT.ana_atlas_style.Signal(signal)` 后继续 `signal.SetLineStyle(1)`。这些函数不接管对象生命周期、绘制选项或保存流程；若显式选择对象预设，仍应将本图的手动调整写在它之后。
 
-PyROOT 推荐使用统一入口 `use_root_style()` 自动定位头文件，无需根据工作目录构造路径；完整可运行的用法见上文“ROOT / PyROOT 最小示例”。
+PyROOT 使用 `use_style("root")` 自动定位头文件。完整用法见上文“ROOT / PyROOT 最小示例”。
 
 ## 标注与导出
 

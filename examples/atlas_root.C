@@ -10,7 +10,7 @@
 
 void atlas_root()
 {
-    ana_atlas_style::SetAtlasStyle();
+    ana_atlas_style::use_style();
     TCanvas canvas("atlas_example", "", 800, 600);
     canvas.SetCanvasSize(800, 600);
     TH1D sample("atlas_toy_sample", ";#it{m} [GeV];Events / 10 GeV", 10, 60, 160);

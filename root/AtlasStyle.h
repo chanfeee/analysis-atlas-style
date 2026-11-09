@@ -12,7 +12,7 @@
 #include "AtlasArtists.h"
 
 namespace ana_atlas_style {
-inline TStyle* SetAtlasStyle()
+inline TStyle* use_style()
 {
     static TStyle* style = nullptr;
     if (!style) {
@@ -71,6 +71,11 @@ inline TStyle* SetAtlasStyle()
     // Do not enable ForceStyle when reading objects. Saving never reapplies
     // this style; individual object attributes stay caller-owned.
     return style;
+}
+
+inline TStyle* SetAtlasStyle()
+{
+    return use_style();
 }
 
 inline TLatex* AtlasLabel(double x, double y, const char* text = "")

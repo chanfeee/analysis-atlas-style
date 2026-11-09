@@ -5,11 +5,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from ana_atlas_style import BACKGROUND_COLORS, BACKGROUND_FILL_COLORS, SERIES_COLORS, use_atlas_style
+from ana_atlas_style import BACKGROUND_COLORS, BACKGROUND_FILL_COLORS, SERIES_COLORS, use_style
 
 
 def main():
-    use_atlas_style()
+    use_style("mpl")
     fig, axes = plt.subplots(1, 2, figsize=(10, 5.8))
     groups = (
         ("Line / marker accents",

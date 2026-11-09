@@ -5,11 +5,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ana_atlas_style import artist_style, atlas_label, use_atlas_style
+from ana_atlas_style import artist_style, atlas_label, use_style
 
 
 def main():
-    use_atlas_style()
+    use_style("mpl")
     edges = np.arange(60, 170, 10)
     sample = np.array([10, 26, 70, 125, 92, 53, 26, 14, 8, 3])
     expected = np.array([12, 25, 65, 115, 100, 50, 28, 16, 7, 4])
