@@ -11,7 +11,7 @@ from plotting import SERIES_COLORS, SERIES_FILL_COLORS, use_atlas_style
 def main():
     use_atlas_style()
     fig, axes = plt.subplots(1, 2, figsize=(10, 4.1))
-    names = ("Blue", "Red", "Green", "Orange", "Violet")
+    names = ("Blue", "Violet", "Teal", "Gray", "Orange")
     groups = (
         ("Line / marker accents", list(zip(names, SERIES_COLORS))),
         ("Stacked-area fills", list(zip(names, SERIES_FILL_COLORS))),
@@ -28,7 +28,7 @@ def main():
     fig.subplots_adjust(left=0.06, right=0.98, bottom=0.12, top=0.96, wspace=0.18)
     fig.text(
         0.06, 0.045,
-        "NEJM-inspired accents; fills: 45% accent + 55% white. Data: black; prediction/uncertainty: gray.",
+        "Distribution colors based on ATLAS PRL 132, 221801 (Fig. 2).",
         fontsize=10,
     )
     output = Path(__file__).resolve().parent / "output"

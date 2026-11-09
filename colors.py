@@ -1,41 +1,49 @@
-"""Journal-inspired color defaults, mirrored in root/AtlasColors.h.
+"""ATLAS PRL color defaults, mirrored in root/AtlasColors.h.
 
-Accents use the first five ggsci NEJM colors, reordered by role. Area fills
-mix 45% accent with 55% white; they are opaque so stacked layers do not mix.
-These are project choices, not official journal or ATLAS color requirements.
-Source: https://nanx.me/ggsci/reference/pal_nejm.html
+Distribution colors follow PRL 132, 221801, Fig. 2.
+Expected-limit bands follow PRL 133, 101801, Fig. 2.
 """
 
 SERIES_COLORS = (
-    "#0072B5",  # blue
-    "#BC3C29",  # red
-    "#20854E",  # green
-    "#E18727",  # orange
-    "#7876B1",  # violet
+    "#4292C6",  # blue
+    "#6A51A3",  # violet
+    "#278471",  # teal edge
+    "#666666",  # gray
+    "#FF7700",  # orange
 )
 
-
-def _light_fill(color):
-    channels = (int(color[i:i + 2], 16) for i in (1, 3, 5))
-    return "#" + "".join(f"{round(0.45 * c + 0.55 * 255):02X}" for c in channels)
-
-
-SERIES_FILL_COLORS = tuple(_light_fill(color) for color in SERIES_COLORS)
+SERIES_FILL_COLORS = (
+    "#BCE1FF",  # QCD track
+    "#BCB1D6",  # violet mixed with white
+    "#48C9B0",  # W+jets
+    "#D6D6D6",  # other backgrounds
+    "#FFC28C",  # orange mixed with white
+)
 
 COLORS = {
     "data": "#000000",
-    "prediction": "#303030",
+    "prediction": "#333333",
     "signal": SERIES_COLORS[1],
     "background": SERIES_COLORS[0],
     "alternative": SERIES_COLORS[4],
-    "uncertainty": "#999999",
+    "uncertainty": "#666666",
     "reference": "#404040",
     "annotation": "#444444",
 }
 
+LIMIT_BAND_COLORS = {
+    "expected_1sigma": "#4AD9D9",
+    "expected_2sigma": "#FDC536",
+}
+
 FILL_COLORS = {
-    "prediction": _light_fill(COLORS["prediction"]),
+    "prediction": SERIES_FILL_COLORS[3],
     "signal": SERIES_FILL_COLORS[1],
     "background": SERIES_FILL_COLORS[0],
     "alternative": SERIES_FILL_COLORS[4],
+}
+
+MATRIX_COLORS = {
+    "density": ("#FFFFFF", SERIES_FILL_COLORS[0], SERIES_COLORS[0], "#174568"),
+    "correlation": ("#2166AC", "#FFFFFF", "#C62F3B"),
 }

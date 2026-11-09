@@ -103,7 +103,8 @@ canvas.Print("root_example.pdf", "EmbedFonts")
 | --- | --- |
 | `use_atlas_style(font="Arial", rc=None)` | 应用 Matplotlib 全局默认值 |
 | `atlas_style(font="Arial", rc=None)` | 临时应用，退出时恢复周围的 rc 设置 |
-| `artist_style(role, index=0, **overrides)` | 取得可手动覆盖的原生 kwargs，不执行绘图 |
+| `artist_style(role, index=0, **overrides)` | 返回可手动覆盖的原生绘图参数 |
+| `matrix_style(kind="density", **overrides)` | 返回二维图的色标参数 |
 | `atlas_label(ax, text=..., data=..., com=..., lumi=None, **kwargs)` | 显式添加 ATLAS 与数据集标注 |
 | `use_root_style()` | 加载随包分发的头文件，应用 ROOT 默认值 |
 | `root_include_dir()` | 取得 C++ 头文件目录，返回原生 `Path` |
@@ -145,6 +146,7 @@ wheel 只包含运行代码、说明和 C++ 头文件；toy 数据、示例脚�
 - `colors.py`、`root/AtlasColors.h`：Python 和原生 C++ 的曲线强调色、面积填充色及系列颜色循环。
 - `examples/atlas_mpl.py`、`examples/atlas_root.C`：使用相同 toy 数据的示例。
 - `examples/showcase_mpl.py`、`examples/showcase_root.C`：综合样图，集中展示当前风格的主要特性。
+- `examples/gallery_mpl.py`、`examples/gallery_root.py`：上限、扫描、效率、ROC 和矩阵图集。
 - `examples/showcase_inputs.dat`：两套综合样图共用的固定 toy 输入。
 - `examples/palette.py`：生成颜色卡，便于查看默认配色。
 - `requirements.txt`：固定已验证的 Matplotlib 端版本，作为复现样图时的约束；正常安装依赖由 `pyproject.toml` 管理。
@@ -154,7 +156,7 @@ wheel 只包含运行代码、说明和 C++ 头文件；toy 数据、示例脚�
 
 优先查看这一组示例，它们在一张图中包含：
 
-- 全部五个主色：蓝、绿、橙的三种堆叠背景，红色信号和紫色替代模型。背景使用浅填充和同色相描边，曲线使用完整强调色。
+- 堆叠背景采用浅蓝、青绿和灰色填充。总预测用深灰实线，信号用紫色长虚线，替代模型用橙色短虚线。
 - 黑色 toy 数据点及统计误差条、灰色总预测误差带、无边框双列图例。
 - ATLAS Simulation 标识、碰撞能量、亮度、附加说明，以及带单位的坐标轴。
 - 上方面板的对数纵轴、下方面板的线性 Toy / Pred. 比值、单位参考线和替代模型比值。
@@ -188,8 +190,8 @@ Matplotlib 的 `make_figure()` 返回原生 Figure 和两个 Axes，便于继续
 | 字体、图例 | Arial / ROOT Helvetica；黑色文字，无边框图例 | rc 参数、标注 kwargs、原生文字或图例 setter |
 | 数据点 | 黑色实心圆、无连接线、误差条无端帽 | `artist_style("data", ...)` 或 `AtlasStyle::Data` 后使用 setter |
 | 总预测 | 深灰实线 | `prediction` 预设 |
-| 信号、替代模型 | 深红长虚线、紫色短虚线 | `signal`、`alternative` 预设 |
-| 背景填充 | 五色循环，浅填充、同色相细描边 | `background` 预设，零起始 `index` 选色 |
+| 信号、替代模型 | 紫色长虚线、橙色短虚线 | `signal`、`alternative` 预设 |
+| 背景填充 | 五色循环，各系列独立设置填充和描边 | `background` 预设，零起始 `index` 选色 |
 | 不确定度 | 灰色斜线；在彩色背景上可加半透明白色衬底 | `uncertainty` 预设；ROOT 可另用 `UncertaintyShade` |
 | 参考线、附加文字 | 深灰虚线、深灰说明文字 | `reference`、`annotation` 预设 |
 | 导出 | 优先矢量 PDF，嵌入字体，Matplotlib PNG 默认 300 dpi | 原生 `savefig` / `Print` 参数 |
@@ -236,7 +238,7 @@ fig, ax = plt.subplots(figsize=(9, 6))
 points = ax.errorbar(x, observed, yerr=error, **artist_style("data"))
 signal_line = ax.stairs(
     signal, edges,
-    **artist_style("signal", color="#0072B5", linewidth=2.5, linestyle="-"),
+    **artist_style("signal", color="#4292C6", linewidth=2.5, linestyle="-"),
 )
 signal_line.set_linewidth(3)  # 原生 setter 仍有最终决定权。
 ax.set_ylim(0, 200)
@@ -259,18 +261,18 @@ with atlas_style(rc={"axes.labelsize": 18}):
 
 ## 默认颜色
 
-配色参考了 Nature 已发表 ATLAS 图的视觉层次，并核对了 ggsci 对 NPG、AAAS、NEJM 配色的整理。当前强调色选用 [ggsci NEJM](https://nanx.me/ggsci/reference/pal_nejm.html) 前五色，按蓝、红、绿、橙、紫重排。ggsci 明确将这些方案称为期刊图启发的配色；它们不是期刊或 ATLAS 的统一强制色板。
+默认分布图配色参考 ATLAS 的 Higgsino 搜索。原图同时展示堆叠背景、信号曲线、斜线误差带和数据比值。INSPIRE 于 2026-11-09 记录 45 次引用，论文使用 Run 2 数据。 [PRL 132, 221801 (2024)，图 2](https://arxiv.org/pdf/2401.14046#page=7) · [INSPIRE](https://inspirehep.net/literature/2751400)
 
-面积填充与强调曲线分别定义。同一类别的填充、边线共用色相，类别之间仍保持区分。填充由 **45% 原色与 55% 白色**预先混合，使用不透明色绘制，使原生 ROOT 的累积填充和 Matplotlib 堆叠保持一致。数据点保留黑色，不确定度带保留中性灰。这是本项目的设计选择，可用原生接口逐图覆盖。
+浅蓝、青绿和灰色为原图背景填充。紫色和橙色来自原图的两条信号曲线，本包分别分配给信号和替代模型。青绿描边采用加深色，紫色和橙色的可选填充色使用原色与白色混合。深灰总预测线和二维渐变是本包的设计选择。
 
 | 用途 | Python 键 | ROOT 强调色函数 | 强调色 | 面积填充色 |
 | --- | --- | --- | --- | --- |
 | 数据点 | `data` | `AtlasColors::Data()` | `#000000` | - |
-| 名义预测或总预测 | `prediction` | `AtlasColors::Prediction()` | `#303030` | `#A2A2A2` |
-| 额外叠加的信号曲线 | `signal` | `AtlasColors::Signal()` | `#BC3C29` | `#E1A79F` |
-| 单个背景的默认首色 | `background` | `AtlasColors::Background()` | `#0072B5` | `#8CC0DE` |
-| 替代模型或对比曲线 | `alternative` | `AtlasColors::Alternative()` | `#7876B1` | `#C2C1DC` |
-| 不确定度带 | `uncertainty` | `AtlasColors::Uncertainty()` | `#999999` | - |
+| 名义预测或总预测 | `prediction` | `AtlasColors::Prediction()` | `#333333` | `#D6D6D6` |
+| 额外叠加的信号曲线 | `signal` | `AtlasColors::Signal()` | `#6A51A3` | `#BCB1D6` |
+| 单个背景的默认首色 | `background` | `AtlasColors::Background()` | `#4292C6` | `#BCE1FF` |
+| 替代模型或对比曲线 | `alternative` | `AtlasColors::Alternative()` | `#FF7700` | `#FFC28C` |
+| 不确定度带 | `uncertainty` | `AtlasColors::Uncertainty()` | `#666666` | - |
 | 参考线 | `reference` | `AtlasColors::Reference()` | `#404040` | - |
 | 附加说明文字 | `annotation` | `AtlasColors::Annotation()` | `#444444` | - |
 
@@ -283,9 +285,50 @@ ax.stairs(values, edges, fill=True,
           facecolor=FILL_COLORS["background"], edgecolor=COLORS["background"])
 ```
 
-原生 ROOT 可直接写 `hist.SetLineColor(AtlasColors::Prediction())` 和 `hist.SetFillColor(AtlasColors::PredictionFill())`；PyROOT 对应 `ROOT.AtlasColors.Prediction()`、`ROOT.AtlasColors.PredictionFill()`。多个系列的强调色可用 `SERIES_COLORS[i]` 或 `AtlasColors::Series(i)`，填充色用 `SERIES_FILL_COLORS[i]` 或 `AtlasColors::SeriesFill(i)`。五个强调色依次为 `#0072B5`、`#BC3C29`、`#20854E`、`#E18727`、`#7876B1`；橙色的填充为 `#F2C99E`。ROOT 的系列函数按五色循环，不会改变二维图的连续色标。
+用 `SERIES_COLORS[i]` 或 `AtlasColors::Series(i)` 取得系列强调色，用 `SERIES_FILL_COLORS[i]` 或 `AtlasColors::SeriesFill(i)` 取得对应填充。涉及多个物理过程时，在分析脚本里固定过程到颜色的映射，方便跨图识别。
 
-多个物理过程的“进程 → 颜色”映射由具体分析固定，保证同一过程跨图颜色一致。总预测使用中性深灰线，与背景过程的五色循环分开；综合样图不再把背景 A 借称为 `prediction`。超过五个系列时应结合不同线型、标记或分面来区分。Python 与 C++ 保留两份简短的原生定义，修改默认值时需同步维护；当前已逐项核对 RGB 一致。
+## 常用图型默认样式
+
+| 图型 | 版式和颜色默认用法 | Matplotlib / ROOT |
+| --- | --- | --- |
+| 数据与预测、堆叠分布 | 白底、黑色数据点、深灰总预测、分色背景、灰色斜线误差带。单图用 8×6，双面板共享横轴，上下高度约 3:1 | `data`、`prediction`、`background`、`uncertainty` / `Data`、`Prediction`、`Background`、`Uncertainty` |
+| Cutflow、分类产额 | 横轴按选择步骤或物理分类排序。背景用分色柱，数据用黑点，跨数量级时可用对数纵轴 | `background`、`data` / `Background`、`Data` |
+| 形状叠加、剖面、系统学变体 | 无填充的系列曲线，颜色和虚线交替。系统学变体可选 `prediction` 与 `alternative` | `series` / `Series` |
+| 比值、差值、pull | 沿用主面板的系列颜色。比值参考线在 1，差值和 pull 参考线在 0。误差与参考值由分析传入 | `reference` / `Reference` |
+| 效率和 ROC | 效率用黑点误差条和有色模拟曲线。ROC 横轴为信号效率，纵轴为背景效率，可按量级使用对数纵轴 | `data`、`series` / `Data`、`Series` |
+| 上限与预期区间 | 观测用黑点实线，预期用黑色虚线。先画黄色 ±2σ，再画青色 ±1σ | `data`、`expected`、`expected_1sigma`、`expected_2sigma` / `Data`、`Expected`、`Expected1Sigma`、`Expected2Sigma` |
+| 似然或显著性扫描、置信轮廓 | 用系列色和线型区分曲线。阈值线用灰色，二维轮廓标明置信水平 | `series`、`reference` / `Series`、`Reference` |
+| 二维密度、响应或混淆矩阵 | 白到深蓝的顺序色标，附带单位色条。归一化矩阵可手动设为 [0, 1] | `matrix_style("density")` / `Density(hist)` |
+| 相关矩阵或有符号偏差 | 蓝、白、红色标。相关矩阵默认 [-1, 1]，蓝色表示负相关，白色对应零，红色表示正相关。偏差图可使用自己的对称范围 | `matrix_style("correlation")` / `Correlation(hist)` |
+
+预期上限带的青色 `#4AD9D9` 和黄色 `#FDC536` 取自双 Higgs 组合的上限图。INSPIRE 于 2026-11-09 记录 190 次引用。 [PRL 133, 101801 (2024)，图 2](https://arxiv.org/pdf/2406.09971#page=5) · [INSPIRE](https://inspirehep.net/literature/2798812)
+
+用 `artist_style("series", index=i)` 或 `AtlasStyle::Series(graph, i)` 选择曲线的颜色和线型。Python 的关键字参数和 ROOT 原生 setter 可以覆盖默认值。分箱、轴范围、误差传播、置信阈值和对象绘制顺序由分析脚本指定。
+
+二维置信轮廓可把 `series` 的颜色和线型传给原生绘图接口。以下 `level` 由分析提供。
+
+```python
+style = artist_style("series", index=0)
+ax.contour(x, y, scan, levels=[level], colors=[style["color"]],
+           linestyles=[style["linestyle"]], linewidths=[style["linewidth"]])
+```
+
+ROOT 可用 `hist.SetContour(1, &level)` 设置单条轮廓，用 `CONT LIST` 取得各段的原生 `TGraph`，再对图对象调用 `AtlasStyle::Series(graph, 0)` 并用线条绘制。 [ROOT 轮廓绘图选项](https://root.cern.ch/doc/v640/classTHistPainter.html)
+
+对二维图，Matplotlib 将 `matrix_style(...)` 返回的参数传给 `imshow` 或 `pcolormesh`。设置 `norm` 可接管归一化。ROOT 对直方图调用相应预设后，用 `hist.Draw("COLZ")` 绘制。ROOT 的连续色标属于当前样式，画布上需要不同色标时，可分别导出各图或在各 pad 的绘制过程中设置色标。密度预设沿用输入的数值范围。相关预设会设置 [-1, 1]，需要其他范围时在应用预设后用原生接口设置上下限。
+
+在源码目录完成可编辑安装后，可运行图集查看上限、扫描、效率、ROC、响应矩阵和相关矩阵。堆叠分布与比值见前面的综合样图。
+
+```bash
+python -m plotting.examples.gallery_mpl
+python -m plotting.examples.gallery_root
+```
+
+![常用图型图集](docs/gallery_mpl.png)
+
+新版蓝白红色标也可查看 [ROOT 相关矩阵样图](docs/gallery_root_correlation.png)。
+
+Matplotlib 图集输出 `examples/output/gallery_mpl.pdf` 和 PNG。PyROOT 输出 `gallery_root.pdf` 与独立的 `gallery_root_density.pdf`、`gallery_root_correlation.pdf`，分别在切换色标之前导出。ROOT 示例使用原生对象，纯 C++ 可调用相同的头文件接口。
 
 ## 复用边界
 
@@ -344,10 +387,7 @@ PyROOT 推荐使用统一入口 `use_root_style()` 自动定位头文件，无�
 - [ATLAS JHEP 08 (2024) 182](https://arxiv.org/abs/2406.19701v2)：已发表论文及 Figure 1 的视觉参考。
 - [ROOT 原生字体嵌入选项](https://root.cern.ch/doc/master/TPad_8cxx_source.html)：`Print(..., "EmbedFonts")` 的行为及 Ghostscript 依赖。
 - [ROOT ratio 示例](https://root.cern.ch/doc/master/ratioplot_8C.html)：多 pad 的原生轴设置，以及用字体精度 3 保持像素字号。
-- [Nature 607, 52-59 (2022)](https://www.nature.com/articles/s41586-022-04893-w)，Figure 2：查看黑色数据点、模型线、误差带和分类颜色的层次。
-- [Nature 633, 542-547 (2024)](https://www.nature.com/articles/s41586-024-07824-z)，Figure 2：查看数据、模型和不确定度分别承担的视觉角色。这里借鉴视觉层次，未复制其测量值或声称取得官方图形认证。
 - [Nature artwork guide](https://www.nature.com/documents/nature-final-artwork.pdf)：出版尺寸、可编辑矢量图及色彩空间的说明。
-- [ggsci 期刊启发配色说明](https://nanx.me/ggsci/articles/ggsci.html)、[NEJM 原色数据](https://github.com/nanxstats/ggsci/blob/master/R/palettes.R)：强调色的直接出处；浅填充混色比例是本项目选择。
 
 ## 验证范围
 
@@ -359,5 +399,6 @@ PyROOT 推荐使用统一入口 `use_root_style()` 自动定位头文件，无�
 - 已在 conda base 的 ROOT 6.38.04 环境运行 C++ 示例，并通过 PyROOT 加载头文件，逐项核对所有具名强调色、面积填充色及系列循环的 RGB 值；Python 与 ROOT 一致。
 - ROOT 示例的 Helvetica 字体族已嵌入 PDF，按 CropBox 渲染后检查了标注、图例、误差带和图的边界；渲染器没有字体格式警告。此前看到的整页留白来自按 MediaBox 预览，实际图的 CropBox 比例正常。
 - 综合样图的两个后端均已运行并逐页查看 PDF 渲染结果；确认五个主色同时出现、上下原生面板分别为对数和线性坐标。两套综合 PDF 都为单页矢量图，字体已嵌入；共享输入为 16 个等宽 bin，预测和 toy 计数均为正，比值及统计误差有限。
+- 两个后端的图集已导出并检查。上限带的 RGB 一致，矩阵色标的采样颜色一致到每通道 0.016 以内。相关系数默认范围为 [-1, 1]，Matplotlib 的显式 `norm` 和 ROOT 的原生上下限设置可覆盖默认值。
 - 默认值整理后，检查了 Matplotlib 的全局 rc 覆盖、对象 kwargs 覆盖、原生 setter、预设字典独立性，以及正常和异常退出时的局部上下文恢复；C++ / PyROOT 对象预设已编译运行，确认原生 setter 可覆盖且入口未开启 `ForceStyle`。两端额外检查了 PDF 导出前后手动颜色、线型和线宽保持不变；ROOT 图例预设也保留调用者对全局字号的调整。
 - `0.1.0` 封装已在项目目录之外验证：无绘图后端的独立环境可导入基础包并定位头文件；安装 wheel 后的 Matplotlib 与 ROOT API 检查通过，可编辑安装也可自动定位源码中的头文件。C++ 宏通过 `ROOT_INCLUDE_PATH` 使用安装包中的头文件运行，不依赖 Python 后端初始化。具备两种后端的环境中，五项自动检查全部通过。

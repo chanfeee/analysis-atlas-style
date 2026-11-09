@@ -1,6 +1,6 @@
 """Internal Matplotlib defaults; public functions return native, editable values."""
 
-from .colors import COLORS
+from .colors import COLORS, LIMIT_BAND_COLORS
 
 # Limits, scales, units and panel layout remain with the caller.
 MPL_DEFAULTS = {
@@ -76,6 +76,10 @@ ARTIST_DEFAULTS = {
         "color": COLORS["alternative"], "linewidth": 2, "linestyle": (0, (3, 2)),
     },
     "background": {"linewidth": 0.7},
+    "series": {"linewidth": 2},
+    "expected": {"color": COLORS["data"], "linestyle": "--", "linewidth": 1.8},
+    "expected_1sigma": {"facecolor": LIMIT_BAND_COLORS["expected_1sigma"], "linewidth": 0},
+    "expected_2sigma": {"facecolor": LIMIT_BAND_COLORS["expected_2sigma"], "linewidth": 0},
     "uncertainty": {
         "facecolor": (1, 1, 1, 0.65), "edgecolor": COLORS["uncertainty"],
         "hatch": "///", "linewidth": 0,
@@ -90,3 +94,4 @@ ARTIST_DEFAULTS = {
 }
 
 LABEL_DEFAULTS = {"loc": 4, "fontsize": (17, 16, 13.5, 12)}
+SERIES_LINESTYLES = ("-", (0, (6, 2)), (0, (3, 2)), ":")

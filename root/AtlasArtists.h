@@ -1,7 +1,10 @@
 #ifndef ANALYSIS_BASE_ATLAS_ARTISTS_H
 #define ANALYSIS_BASE_ATLAS_ARTISTS_H
 
+#include <array>
+#include <numeric>
 #include "AtlasColors.h"
+#include "TROOT.h"
 #include "TStyle.h"
 
 // Attribute presets only: no Draw, data access, error calculation or ownership.
@@ -54,6 +57,87 @@ template <class T> inline T& Background(T& object, unsigned int index = 0)
     object.SetFillColor(AtlasColors::SeriesFill(index));
     object.SetFillStyle(1001);
     return object;
+}
+
+template <class T> inline T& Series(T& object, unsigned int index = 0)
+{
+    static const Style_t lineStyles[] = {1, 2, 7, 3};
+    object.SetLineColor(AtlasColors::Series(index));
+    object.SetLineStyle(lineStyles[index % 4]);
+    object.SetLineWidth(3);
+    object.SetFillStyle(0);
+    return object;
+}
+
+template <class T> inline T& Expected(T& object)
+{
+    object.SetLineColor(AtlasColors::Data());
+    object.SetLineStyle(3);
+    object.SetLineWidth(2);
+    object.SetFillStyle(0);
+    return object;
+}
+
+template <class T> inline T& Expected1Sigma(T& object)
+{
+    object.SetFillColor(AtlasColors::Expected1Sigma());
+    object.SetFillStyle(1001);
+    object.SetLineWidth(0);
+    return object;
+}
+
+template <class T> inline T& Expected2Sigma(T& object)
+{
+    object.SetFillColor(AtlasColors::Expected2Sigma());
+    object.SetFillStyle(1001);
+    object.SetLineWidth(0);
+    return object;
+}
+
+namespace detail {
+constexpr int MatrixContours = 255;
+
+template <std::size_t N> inline int CreatePalette(const char* const (&hex)[N])
+{
+    std::array<Double_t, N> stops, red, green, blue;
+    for (std::size_t i = 0; i < N; ++i) {
+        const TColor* color = gROOT->GetColor(TColor::GetColor(hex[i]));
+        stops[i] = static_cast<double>(i) / (N - 1);
+        red[i] = color->GetRed();
+        green[i] = color->GetGreen();
+        blue[i] = color->GetBlue();
+    }
+    return TColor::CreateGradientColorTable(N, stops.data(), red.data(), green.data(),
+                                            blue.data(), MatrixContours, 1., false);
+}
+
+inline void SetPalette(int firstColor)
+{
+    std::array<Int_t, MatrixContours> indices;
+    std::iota(indices.begin(), indices.end(), firstColor);
+    gStyle->SetPalette(MatrixContours, indices.data());
+}
+} // namespace detail
+
+template <class T> inline T& Density(T& histogram)
+{
+    // Keep the RGB stops in sync with colors.py.
+    static const char* hex[] = {"#FFFFFF", "#BCE1FF", "#4292C6", "#174568"};
+    static const int firstColor = detail::CreatePalette(hex);
+    detail::SetPalette(firstColor);
+    histogram.SetContour(detail::MatrixContours);
+    return histogram;
+}
+
+template <class T> inline T& Correlation(T& histogram)
+{
+    static const char* hex[] = {"#2166AC", "#FFFFFF", "#C62F3B"};
+    static const int firstColor = detail::CreatePalette(hex);
+    detail::SetPalette(firstColor);
+    histogram.SetContour(detail::MatrixContours);
+    histogram.SetMinimum(-1);
+    histogram.SetMaximum(1);
+    return histogram;
 }
 
 template <class T> inline T& Uncertainty(T& object)

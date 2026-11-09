@@ -7,29 +7,51 @@ Artist setters remain the last word; no style is reapplied while saving.
 from contextlib import contextmanager
 from operator import index as integer_index
 
-from ._defaults import ARTIST_DEFAULTS, LABEL_DEFAULTS, MPL_DEFAULTS
-from .colors import SERIES_COLORS, SERIES_FILL_COLORS
+from ._defaults import ARTIST_DEFAULTS, LABEL_DEFAULTS, MPL_DEFAULTS, SERIES_LINESTYLES
+from .colors import MATRIX_COLORS, SERIES_COLORS, SERIES_FILL_COLORS
 
-__all__ = ["use_atlas_style", "atlas_style", "atlas_label", "artist_style"]
+__all__ = ["use_atlas_style", "atlas_style", "atlas_label", "artist_style", "matrix_style"]
 
 
 def artist_style(role, *, index=0, **overrides):
     """Return fresh native kwargs; explicit overrides always win.
 
-    For background fills, index selects a zero-based, cycling palette color.
+    For background fills and comparison curves, index selects a cycling color.
     This function neither draws nor calculates anything. Pass fill=True to
     stairs yourself; histogram baselines and stacking order remain explicit.
     """
     settings = dict(ARTIST_DEFAULTS[role])
-    if role == "background":
+    if role in ("background", "series"):
         palette_index = integer_index(index)
         if palette_index < 0:
-            raise ValueError("background index must be non-negative")
-        palette_index %= len(SERIES_COLORS)
+            raise ValueError(f"{role} index must be non-negative")
+        color_index = palette_index % len(SERIES_COLORS)
+    if role == "background":
         settings.update(
-            facecolor=SERIES_FILL_COLORS[palette_index],
-            edgecolor=SERIES_COLORS[palette_index],
+            facecolor=SERIES_FILL_COLORS[color_index],
+            edgecolor=SERIES_COLORS[color_index],
         )
+    elif role == "series":
+        settings.update(
+            color=SERIES_COLORS[color_index],
+            linestyle=SERIES_LINESTYLES[palette_index % len(SERIES_LINESTYLES)],
+        )
+    settings.update(overrides)
+    return settings
+
+
+def matrix_style(kind="density", **overrides):
+    """Return native imshow or pcolormesh kwargs for a continuous color scale.
+
+    Correlations use a symmetric [-1, 1] range. An explicit norm replaces
+    those default limits. Density plots use the caller's value range.
+    """
+    from matplotlib.colors import LinearSegmentedColormap
+
+    colors = MATRIX_COLORS[kind]
+    settings = {"cmap": LinearSegmentedColormap.from_list(f"atlas_{kind}", colors, N=255)}
+    if kind == "correlation" and overrides.get("norm") is None:
+        settings.update(vmin=-1, vmax=1)
     settings.update(overrides)
     return settings
 
