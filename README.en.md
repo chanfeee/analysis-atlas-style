@@ -143,7 +143,7 @@ The package applies the ATLAS base style, then its own defaults, then caller ove
 | Fonts and legends | Arial in Matplotlib, Helvetica in ROOT, black text and frameless legends | rc settings, label kwargs, native setters |
 | Data and prediction | Filled black circles with uncapped errors and a dark gray solid prediction line | `data`, `prediction` |
 | Signal and alternative model | Long violet dashes and short orange dashes | `signal`, `alternative` |
-| Backgrounds | Five fills with matching darker outlines | `background` with a zero-based `index` |
+| Backgrounds | Eight fixed colors with matching fills and outlines | `background` with an `index` from 0 to 7 |
 | Uncertainty | Gray hatching, with an optional translucent white underlay | `uncertainty` or ROOT's `Uncertainty` and `UncertaintyShade` |
 | Reference and annotation | Dark gray dashed line and dark gray annotation text | `reference`, `annotation` |
 | Export | Vector PDF with embedded fonts. Matplotlib raster exports default to 300 dpi | Native `savefig` / `Print` arguments |
@@ -166,24 +166,31 @@ Use `fill=True` for a filled Matplotlib stair plot. Baselines, stacking order, a
 
 The violet signal and orange alternative-model accents draw on two curves from the ATLAS Higgsino search. INSPIRE recorded 45 citations on 2026-11-09. The paper uses Run 2 data. [PRL 132, 221801 (2024), Fig. 2](https://arxiv.org/pdf/2401.14046#page=7) · [INSPIRE](https://inspirehep.net/literature/2751400)
 
-The MC stack has its own palette. The dark gray total prediction and the matrix ramps are also local design choices.
+The MC stack uses the five exact reference colors, plus sage, muted gold and lilac.
 
 | Index | MC background | Fill | Outline |
 | --- | --- | --- | --- |
-| 0 | Periwinkle | `#B5BFEA` | `#606FA6` |
-| 1 | Mint | `#8CD0AF` | `#3D8667` |
-| 2 | Gold | `#F3CC7A` | `#A57529` |
-| 3 | Rose | `#E8AAC4` | `#AB5879` |
-| 4 | Slate | `#BAC8D3` | `#667887` |
+| 0 | Navy | `#33395B` | `#33395B` |
+| 1 | Slate blue | `#5D74A2` | `#5D74A2` |
+| 2 | Pale blue | `#C4D8F2` | `#C4D8F2` |
+| 3 | Wine red | `#8E2D30` | `#8E2D30` |
+| 4 | Sage | `#82AD92` | `#82AD92` |
+| 5 | Muted gold | `#CFAB66` | `#CFAB66` |
+| 6 | Lilac | `#AB99C6` | `#AB99C6` |
+| 7 | Warm ivory | `#F2E8E3` | `#F2E8E3` |
+
+Run `python -m ana_atlas_style.examples.stack8_mpl` from an editable checkout to reproduce the eight-layer toy stack. [PNG preview](docs/stack8_mpl.png) · [Vector PDF](docs/stack8_mpl.pdf)
 
 Use `artist_style("background", index=i)` or `ana_atlas_style::Background(hist, i)` for both fill and outline. Use `BACKGROUND_COLORS[i]`, `BACKGROUND_FILL_COLORS[i]` or the C++ `colors::Background(i)` and `colors::BackgroundFill(i)` for direct access. Keep a stable process-to-index mapping in each analysis.
+
+Background presets accept indexes 0–7. Outside that range, Matplotlib raises an index error. ROOT reports an error, preserves the object's current style, and returns `-1` from the color lookup. Set additional colors in the analysis script. Pass `facecolor` and `edgecolor` to `ax.stairs(..., fill=True)` in Matplotlib, or use ROOT's `SetFillColor`, `SetLineColor` and `SetFillStyle(1001)` with your own color.
 
 | Role | Python key | C++ function in `ana_atlas_style::colors` | Accent | Optional fill |
 | --- | --- | --- | --- | --- |
 | Data | `data` | `Data()` | `#000000` | — |
 | Nominal or total prediction | `prediction` | `Prediction()` | `#333333` | `#D6D6D6` |
 | Signal | `signal` | `Signal()` | `#6A51A3` | `#BCB1D6` |
-| First background | `background` | `Background()` | `#606FA6` | `#B5BFEA` |
+| First background | `background` | `Background()` | `#33395B` | `#33395B` |
 | Alternative model | `alternative` | `Alternative()` | `#FF7700` | `#FFC28C` |
 | Uncertainty | `uncertainty` | `Uncertainty()` | `#666666` | — |
 | Reference line | `reference` | `Reference()` | `#404040` | — |

@@ -2,6 +2,7 @@
 #define ANA_ATLAS_STYLE_COLORS_H
 
 #include "TColor.h"
+#include "TError.h"
 
 // Keep these defaults consistent with ../colors.py.
 // Role assignments are local conventions; they are not ATLAS-wide rules.
@@ -38,19 +39,21 @@ inline Color_t SeriesFill(unsigned int index)
 inline Color_t Background(unsigned int index = 0)
 {
     static const char* hex[] = {
-        "#606FA6", "#3D8667", "#A57529", "#AB5879", "#667887"
+        "#33395B", "#5D74A2", "#C4D8F2", "#8E2D30",
+        "#82AD92", "#CFAB66", "#AB99C6", "#F2E8E3"
     };
     const unsigned int count = sizeof(hex) / sizeof(hex[0]);
-    return TColor::GetColor(hex[index % count]);
+    if (index >= count) {
+        ::Error("ana_atlas_style::colors::Background",
+                "background index %u exceeds the default palette; set native colors", index);
+        return -1;
+    }
+    return TColor::GetColor(hex[index]);
 }
 
 inline Color_t BackgroundFill(unsigned int index = 0)
 {
-    static const char* hex[] = {
-        "#B5BFEA", "#8CD0AF", "#F3CC7A", "#E8AAC4", "#BAC8D3"
-    };
-    const unsigned int count = sizeof(hex) / sizeof(hex[0]);
-    return TColor::GetColor(hex[index % count]);
+    return Background(index);
 }
 
 inline Color_t PredictionFill()  { return SeriesFill(3); }

@@ -16,7 +16,7 @@ __all__ = ["use_atlas_style", "atlas_style", "atlas_label", "artist_style", "mat
 def artist_style(role, *, index=0, **overrides):
     """Return fresh native kwargs; explicit overrides always win.
 
-    For background fills and comparison curves, index selects a cycling color.
+    Background indexes select one of eight fixed colors. Series colors cycle.
     This function neither draws nor calculates anything. Pass fill=True to
     stairs yourself; histogram baselines and stacking order remain explicit.
     """
@@ -26,10 +26,11 @@ def artist_style(role, *, index=0, **overrides):
         if palette_index < 0:
             raise ValueError(f"{role} index must be non-negative")
     if role == "background":
-        color_index = palette_index % len(BACKGROUND_COLORS)
+        if palette_index >= len(BACKGROUND_COLORS):
+            raise IndexError("background index exceeds the default palette; set native colors")
         settings.update(
-            facecolor=BACKGROUND_FILL_COLORS[color_index],
-            edgecolor=BACKGROUND_COLORS[color_index],
+            facecolor=BACKGROUND_FILL_COLORS[palette_index],
+            edgecolor=BACKGROUND_COLORS[palette_index],
         )
     elif role == "series":
         settings.update(

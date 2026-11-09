@@ -10,20 +10,21 @@ from ana_atlas_style import BACKGROUND_COLORS, BACKGROUND_FILL_COLORS, SERIES_CO
 
 def main():
     use_atlas_style()
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4.1))
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5.8))
     groups = (
         ("Line / marker accents",
          zip(("Blue", "Violet", "Teal", "Gray", "Orange"), SERIES_COLORS, SERIES_COLORS)),
         ("MC stack fills",
-         zip(("Periwinkle", "Mint", "Gold", "Rose", "Slate"),
+         zip(("Navy", "Slate blue", "Pale blue", "Wine red",
+              "Sage", "Muted gold", "Lilac", "Warm ivory"),
              BACKGROUND_FILL_COLORS, BACKGROUND_COLORS)),
     )
     for ax, (title, entries) in zip(axes, groups):
-        ax.set(xlim=(0, 1), ylim=(0, 6))
+        ax.set(xlim=(0, 1), ylim=(0, 8.5))
         ax.axis("off")
-        ax.text(0, 5.65, title, fontsize=17, fontweight="bold")
+        ax.text(0, 8.15, title, fontsize=17, fontweight="bold")
         for row, (name, color, edge) in enumerate(entries):
-            y = 4.9 - row * 0.85
+            y = 7.45 - row * 0.96
             ax.add_patch(Rectangle((0, y - 0.2), 0.16, 0.4, facecolor=color, edgecolor=edge))
             ax.text(0.21, y, name, va="center", fontsize=13)
             ax.text(0.71, y, color, va="center", fontsize=12, family="monospace")

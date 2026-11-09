@@ -117,11 +117,26 @@ class RootTests(unittest.TestCase):
             self.assertEqual(rgb_hex(ROOT.ana_atlas_style.colors.SeriesFill(index)), fill)
         histogram = ROOT.TH1D("background_palette", "", 1, 0, 1)
         histogram.SetDirectory(0)
-        for index in range(len(ana_atlas_style.BACKGROUND_COLORS) + 1):
+        self.assertEqual(len(ana_atlas_style.BACKGROUND_COLORS), 8)
+        self.assertEqual(len(set(ana_atlas_style.BACKGROUND_COLORS)), 8)
+        for index in range(8):
             ROOT.ana_atlas_style.Background(histogram, index)
             style = ana_atlas_style.artist_style("background", index=index)
             self.assertEqual(rgb_hex(histogram.GetLineColor()), style["edgecolor"])
             self.assertEqual(rgb_hex(histogram.GetFillColor()), style["facecolor"])
+        with self.assertRaises(IndexError):
+            ana_atlas_style.artist_style("background", index=8)
+        previous_fill = histogram.GetFillColor()
+        previous_line = histogram.GetLineColor()
+        error_level = ROOT.gErrorIgnoreLevel
+        try:
+            ROOT.gErrorIgnoreLevel = ROOT.kFatal
+            self.assertEqual(ROOT.ana_atlas_style.colors.Background(8), -1)
+            ROOT.ana_atlas_style.Background(histogram, 8)
+        finally:
+            ROOT.gErrorIgnoreLevel = error_level
+        self.assertEqual(histogram.GetFillColor(), previous_fill)
+        self.assertEqual(histogram.GetLineColor(), previous_line)
 
 
 if __name__ == "__main__":

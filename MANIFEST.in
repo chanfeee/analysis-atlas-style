@@ -1,4 +1,4 @@
 include requirements.txt
 recursive-include examples *.py *.C *.dat
 recursive-include tests *.py
-recursive-include docs *.png
+recursive-include docs *.png *.pdf

@@ -51,10 +51,12 @@ template <class T> inline T& Alternative(T& object)
 
 template <class T> inline T& Background(T& object, unsigned int index = 0)
 {
-    object.SetLineColor(colors::Background(index));
+    const Color_t color = colors::Background(index);
+    if (color < 0) return object;
+    object.SetLineColor(color);
     object.SetLineStyle(1);
     object.SetLineWidth(1);
-    object.SetFillColor(colors::BackgroundFill(index));
+    object.SetFillColor(color);
     object.SetFillStyle(1001);
     return object;
 }

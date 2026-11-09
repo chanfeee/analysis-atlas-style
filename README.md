@@ -159,7 +159,7 @@ wheel 只包含运行代码、说明和 C++ 头文件；toy 数据、示例脚�
 
 优先查看这一组示例，它们在一张图中包含：
 
-- 堆叠背景采用偏蓝的浅薰衣草色、薄荷绿和暖金色。总预测用深灰实线，信号用紫色长虚线，替代模型用橙色短虚线。
+- 堆叠背景从底部到顶部采用浅蓝、灰蓝和深蓝。总预测用深灰实线，信号用紫色长虚线，替代模型用橙色短虚线。
 - 黑色 toy 数据点及统计误差条、灰色总预测误差带、无边框双列图例。
 - ATLAS Simulation 标识、碰撞能量、亮度、附加说明，以及带单位的坐标轴。
 - 上方面板的对数纵轴、下方面板的线性 Toy / Pred. 比值、单位参考线和替代模型比值。
@@ -194,7 +194,7 @@ Matplotlib 的 `make_figure()` 返回原生 Figure 和两个 Axes，便于继续
 | 数据点 | 黑色实心圆、无连接线、误差条无端帽 | `artist_style("data", ...)` 或 `ana_atlas_style::Data` 后使用 setter |
 | 总预测 | 深灰实线 | `prediction` 预设 |
 | 信号、替代模型 | 紫色长虚线、橙色短虚线 | `signal`、`alternative` 预设 |
-| 背景填充 | 五色循环，各系列独立设置填充和描边 | `background` 预设，零起始 `index` 选色 |
+| 背景填充 | 8 个固定色，描边与填充同色 | `background` 预设，`index` 为 0–7 |
 | 不确定度 | 灰色斜线；在彩色背景上可加半透明白色衬底 | `uncertainty` 预设；ROOT 可另用 `UncertaintyShade` |
 | 参考线、附加文字 | 深灰虚线、深灰说明文字 | `reference`、`annotation` 预设 |
 | 导出 | 优先矢量 PDF，嵌入字体，Matplotlib PNG 默认 300 dpi | 原生 `savefig` / `Print` 参数 |
@@ -266,22 +266,27 @@ with atlas_style(rc={"axes.labelsize": 18}):
 
 信号和替代模型的强调色参考 ATLAS 的 Higgsino 搜索。原图同时展示堆叠背景、信号曲线、斜线误差带和数据比值。INSPIRE 于 2026-11-09 记录 45 次引用，论文使用 Run 2 数据。 [PRL 132, 221801 (2024)，图 2](https://arxiv.org/pdf/2401.14046#page=7) · [INSPIRE](https://inspirehep.net/literature/2751400)
 
-紫色和橙色来自原图的两条信号曲线，本包分别分配给信号和替代模型。两色的可选填充使用原色与白色混合。MC 堆叠独立使用浅薰衣草、薄荷绿、暖金、玫瑰粉和石板灰蓝五色，搭配加深的同色描边。堆叠配色、深灰总预测线和二维渐变是本包的设计选择。
+紫色和橙色来自原图的两条信号曲线，本包分别分配给信号和替代模型。两色的可选填充使用原色与白色混合。MC 堆叠采用参考色卡的五个原色，补充灰绿、哑金和淡紫。
 
 | MC 背景索引 | 颜色 | 填充 | 描边 |
 | --- | --- | --- | --- |
-| 0 | 浅薰衣草色 | `#B5BFEA` | `#606FA6` |
-| 1 | 薄荷绿 | `#8CD0AF` | `#3D8667` |
-| 2 | 暖金 | `#F3CC7A` | `#A57529` |
-| 3 | 玫瑰粉 | `#E8AAC4` | `#AB5879` |
-| 4 | 石板灰蓝 | `#BAC8D3` | `#667887` |
+| 0 | 深蓝 | `#33395B` | `#33395B` |
+| 1 | 灰蓝 | `#5D74A2` | `#5D74A2` |
+| 2 | 浅蓝 | `#C4D8F2` | `#C4D8F2` |
+| 3 | 酒红 | `#8E2D30` | `#8E2D30` |
+| 4 | 灰绿 | `#82AD92` | `#82AD92` |
+| 5 | 哑金 | `#CFAB66` | `#CFAB66` |
+| 6 | 淡紫 | `#AB99C6` | `#AB99C6` |
+| 7 | 暖白 | `#F2E8E3` | `#F2E8E3` |
+
+在可编辑安装的源码目录运行 `python -m ana_atlas_style.examples.stack8_mpl` 可生成八层 toy 堆叠图。[PNG 预览](docs/stack8_mpl.png) · [矢量 PDF](docs/stack8_mpl.pdf)
 
 | 用途 | Python 键 | ROOT 强调色函数 | 强调色 | 面积填充色 |
 | --- | --- | --- | --- | --- |
 | 数据点 | `data` | `ana_atlas_style::colors::Data()` | `#000000` | - |
 | 名义预测或总预测 | `prediction` | `ana_atlas_style::colors::Prediction()` | `#333333` | `#D6D6D6` |
 | 额外叠加的信号曲线 | `signal` | `ana_atlas_style::colors::Signal()` | `#6A51A3` | `#BCB1D6` |
-| 单个背景的默认首色 | `background` | `ana_atlas_style::colors::Background()` | `#606FA6` | `#B5BFEA` |
+| 单个背景的默认首色 | `background` | `ana_atlas_style::colors::Background()` | `#33395B` | `#33395B` |
 | 替代模型或对比曲线 | `alternative` | `ana_atlas_style::colors::Alternative()` | `#FF7700` | `#FFC28C` |
 | 不确定度带 | `uncertainty` | `ana_atlas_style::colors::Uncertainty()` | `#666666` | - |
 | 参考线 | `reference` | `ana_atlas_style::colors::Reference()` | `#404040` | - |
@@ -297,6 +302,8 @@ ax.stairs(values, edges, fill=True,
 ```
 
 曲线系列使用 `SERIES_COLORS[i]` 或 `ana_atlas_style::colors::Series(i)`，配套填充色见 `SERIES_FILL_COLORS` 和 `ana_atlas_style::colors::SeriesFill(i)`。MC 背景可用 `artist_style("background", index=i)` 或 `ana_atlas_style::Background(hist, i)` 同时设置描边与填充，也可直接读取 `BACKGROUND_COLORS`、`BACKGROUND_FILL_COLORS` 或调用 `ana_atlas_style::colors::Background(i)`、`ana_atlas_style::colors::BackgroundFill(i)`。涉及多个物理过程时，在分析脚本里固定过程到颜色的映射，方便跨图识别。
+
+MC 背景预设仅接受索引 0–7。越界时 Matplotlib 抛出索引错误，ROOT 记录错误并保留对象的现有样式，颜色查询返回 `-1`。第九个及之后的本底在分析脚本里设色，例如给 Matplotlib 的 `ax.stairs(..., fill=True)` 传入 `facecolor` 和 `edgecolor`，或调用 ROOT 的 `hist.SetFillColor(TColor::GetColor(hex))`、`hist.SetLineColor(TColor::GetColor(hex))` 和 `hist.SetFillStyle(1001)`。
 
 ## 常用图型默认样式
 
