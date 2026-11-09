@@ -28,13 +28,13 @@ python -m pip install -e '.[mpl]'
 
 在每个分析项目使用的 Python / conda 环境中安装一次，之后即可从任意分析目录直接 `import ana_atlas_style`，无需复制风格文件或添加 `sys.path`。安装时使用的 `python` 应与运行分析脚本时一致。
 
-本机可直接以绝对路径复用当前源码；编辑式安装会跟随该目录中的风格修改：
+可以用仓库所在的绝对路径做编辑式安装。安装后会跟随该目录中的风格修改。
 
 ```bash
 python -m pip install -e '/absolute/path/to/style-repository[mpl]'
 ```
 
-若源码位于其他位置，将上述绝对路径替换为实际源码目录。其他机器也可直接从私有 GitHub 仓库安装，需要已有该仓库的 SSH 访问权限：
+将占位路径替换为仓库的实际路径。也可以用 SSH 从私有 GitHub 仓库安装。
 
 ```bash
 python -m pip install 'analysis-atlas-style[mpl] @ git+ssh://git@github.com/chanfeee/analysis-atlas-style.git'
