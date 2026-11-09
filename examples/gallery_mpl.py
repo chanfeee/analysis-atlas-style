@@ -5,7 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from plotting import artist_style, matrix_style, use_atlas_style
+from ana_atlas_style import artist_style, matrix_style, use_atlas_style
 
 
 def main():

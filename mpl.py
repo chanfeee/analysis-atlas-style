@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from operator import index as integer_index
 
 from ._defaults import ARTIST_DEFAULTS, LABEL_DEFAULTS, MPL_DEFAULTS, SERIES_LINESTYLES
-from .colors import MATRIX_COLORS, SERIES_COLORS, SERIES_FILL_COLORS
+from .colors import BACKGROUND_COLORS, BACKGROUND_FILL_COLORS, MATRIX_COLORS, SERIES_COLORS
 
 __all__ = ["use_atlas_style", "atlas_style", "atlas_label", "artist_style", "matrix_style"]
 
@@ -25,15 +25,15 @@ def artist_style(role, *, index=0, **overrides):
         palette_index = integer_index(index)
         if palette_index < 0:
             raise ValueError(f"{role} index must be non-negative")
-        color_index = palette_index % len(SERIES_COLORS)
     if role == "background":
+        color_index = palette_index % len(BACKGROUND_COLORS)
         settings.update(
-            facecolor=SERIES_FILL_COLORS[color_index],
-            edgecolor=SERIES_COLORS[color_index],
+            facecolor=BACKGROUND_FILL_COLORS[color_index],
+            edgecolor=BACKGROUND_COLORS[color_index],
         )
     elif role == "series":
         settings.update(
-            color=SERIES_COLORS[color_index],
+            color=SERIES_COLORS[palette_index % len(SERIES_COLORS)],
             linestyle=SERIES_LINESTYLES[palette_index % len(SERIES_LINESTYLES)],
         )
     settings.update(overrides)

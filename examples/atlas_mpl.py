@@ -1,11 +1,11 @@
-"""Run from the project root: python -m plotting.examples.atlas_mpl."""
+"""Run from the project root: python -m ana_atlas_style.examples.atlas_mpl."""
 
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from plotting import artist_style, atlas_label, use_atlas_style
+from ana_atlas_style import artist_style, atlas_label, use_atlas_style
 
 
 def main():

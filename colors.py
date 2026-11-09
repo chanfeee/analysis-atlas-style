@@ -1,6 +1,6 @@
 """ATLAS PRL color defaults, mirrored in root/AtlasColors.h.
 
-Distribution colors follow PRL 132, 221801, Fig. 2.
+Signal and comparison accents draw on PRL 132, 221801, Fig. 2.
 Expected-limit bands follow PRL 133, 101801, Fig. 2.
 """
 
@@ -20,11 +20,14 @@ SERIES_FILL_COLORS = (
     "#FFC28C",  # orange mixed with white
 )
 
+BACKGROUND_COLORS = ("#606FA6", "#3D8667", "#A57529", "#AB5879", "#667887")
+BACKGROUND_FILL_COLORS = ("#B5BFEA", "#8CD0AF", "#F3CC7A", "#E8AAC4", "#BAC8D3")
+
 COLORS = {
     "data": "#000000",
     "prediction": "#333333",
     "signal": SERIES_COLORS[1],
-    "background": SERIES_COLORS[0],
+    "background": BACKGROUND_COLORS[0],
     "alternative": SERIES_COLORS[4],
     "uncertainty": "#666666",
     "reference": "#404040",
@@ -39,7 +42,7 @@ LIMIT_BAND_COLORS = {
 FILL_COLORS = {
     "prediction": SERIES_FILL_COLORS[3],
     "signal": SERIES_FILL_COLORS[1],
-    "background": SERIES_FILL_COLORS[0],
+    "background": BACKGROUND_FILL_COLORS[0],
     "alternative": SERIES_FILL_COLORS[4],
 }
 

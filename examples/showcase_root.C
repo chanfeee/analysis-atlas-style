@@ -18,7 +18,7 @@
 // Native ROOT counterpart of showcase_mpl.py; same toy inputs and ratios.
 void showcase_root()
 {
-    SetAtlasStyle();
+    ana_atlas_style::SetAtlasStyle();
     const TString source = TString(gSystem->DirName(__FILE__)) + "/showcase_inputs.dat";
     std::ifstream input(source.Data());
     if (!input) throw std::runtime_error("Cannot open showcase_inputs.dat");
@@ -92,17 +92,17 @@ void showcase_root()
         ratio_band.SetPointError(i, half_width, row[7] / prediction);
     }
 
-    AtlasStyle::Background(layer_a, 0);
-    AtlasStyle::Background(layer_b, 2);
-    AtlasStyle::Background(layer_c, 3);
-    AtlasStyle::Prediction(nominal);
-    AtlasStyle::Data(sample);
-    AtlasStyle::Signal(signal);
-    AtlasStyle::Alternative(alternative);
-    AtlasStyle::Uncertainty(band);
-    AtlasStyle::Uncertainty(ratio_band);
+    ana_atlas_style::Background(layer_a, 0);
+    ana_atlas_style::Background(layer_b, 1);
+    ana_atlas_style::Background(layer_c, 2);
+    ana_atlas_style::Prediction(nominal);
+    ana_atlas_style::Data(sample);
+    ana_atlas_style::Signal(signal);
+    ana_atlas_style::Alternative(alternative);
+    ana_atlas_style::Uncertainty(band);
+    ana_atlas_style::Uncertainty(ratio_band);
     TGraphErrors band_shade(band);
-    AtlasStyle::UncertaintyShade(band_shade);
+    ana_atlas_style::UncertaintyShade(band_shade);
 
     upper.cd();
     nominal.SetMinimum(0.6);
@@ -124,7 +124,7 @@ void showcase_root()
     signal.Draw("HIST SAME");
     sample.Draw("E1 X0 SAME");
 
-    auto* atlas = AtlasLabel(0.18, 0.90, "Simulation");
+    auto* atlas = ana_atlas_style::AtlasLabel(0.18, 0.90, "Simulation");
     atlas->SetTextSize(0.045);
     TLatex text;
     text.SetNDC();
@@ -132,12 +132,12 @@ void showcase_root()
     text.SetTextAlign(13);
     text.SetTextSize(21);
     text.DrawLatex(0.18, 0.835, "#sqrt{s} = 13 TeV, 140 fb^{-1}");
-    AtlasStyle::Annotation(text);
+    ana_atlas_style::Annotation(text);
     text.SetTextFont(43);  // Pixel font for this multi-pad layout.
     text.SetTextSize(19);
     text.DrawLatex(0.18, 0.765, "Toy inputs - illustrative region");
     TLegend legend(0.53, 0.715, 0.965, 0.91);
-    AtlasStyle::Legend(legend);
+    ana_atlas_style::Legend(legend);
     legend.SetNColumns(2);
     legend.SetTextFont(43);
     legend.SetTextSize(18);
@@ -156,7 +156,7 @@ void showcase_root()
     lower.cd();
     ratio.SetMinimum(0.65);
     ratio.SetMaximum(1.35);
-    AtlasStyle::Data(ratio);
+    ana_atlas_style::Data(ratio);
     for (auto* axis : {ratio.GetXaxis(), ratio.GetYaxis()}) {
         axis->SetLabelFont(43);
         axis->SetLabelSize(21);
@@ -172,9 +172,9 @@ void showcase_root()
     ratio.Draw("AXIS");
     ratio_band.Draw("2 SAME");
     TLine unity(edges.front(), 1, edges.back(), 1);
-    AtlasStyle::Reference(unity);
+    ana_atlas_style::Reference(unity);
     unity.Draw();
-    AtlasStyle::Alternative(alternative_ratio);
+    ana_atlas_style::Alternative(alternative_ratio);
     alternative_ratio.SetLineWidth(2);  // Local override; native setters win.
     alternative_ratio.Draw("HIST SAME");
     ratio.Draw("E1 X0 SAME");

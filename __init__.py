@@ -3,11 +3,18 @@
 Figure layout, data processing and native drawing calls belong to the caller.
 """
 
-from .colors import COLORS, FILL_COLORS, SERIES_COLORS, SERIES_FILL_COLORS
+from .colors import (
+    BACKGROUND_COLORS,
+    BACKGROUND_FILL_COLORS,
+    COLORS,
+    FILL_COLORS,
+    SERIES_COLORS,
+    SERIES_FILL_COLORS,
+)
 from .mpl import artist_style, atlas_label, atlas_style, matrix_style, use_atlas_style
 from .root import root_include_dir, use_root_style
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "__version__",
@@ -22,4 +29,6 @@ __all__ = [
     "FILL_COLORS",
     "SERIES_COLORS",
     "SERIES_FILL_COLORS",
+    "BACKGROUND_COLORS",
+    "BACKGROUND_FILL_COLORS",
 ]

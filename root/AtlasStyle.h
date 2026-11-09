@@ -1,5 +1,5 @@
-#ifndef ANALYSIS_BASE_ATLAS_STYLE_H
-#define ANALYSIS_BASE_ATLAS_STYLE_H
+#ifndef ANA_ATLAS_STYLE_H
+#define ANA_ATLAS_STYLE_H
 
 // Local ATLAS style implementation, using the public ATLAS style parameters.
 // Parameter reference and provenance: ../README.md (Sources).
@@ -11,11 +11,12 @@
 #include "TStyle.h"
 #include "AtlasArtists.h"
 
+namespace ana_atlas_style {
 inline TStyle* SetAtlasStyle()
 {
     static TStyle* style = nullptr;
     if (!style) {
-        style = new TStyle("ANALYSIS_BASE_ATLAS", "ATLAS publication style");
+        style = new TStyle("ana_atlas_style", "ATLAS publication style");
         style->SetFrameBorderMode(0);
         style->SetFrameFillColor(0);
         style->SetCanvasBorderMode(0);
@@ -40,8 +41,8 @@ inline TStyle* SetAtlasStyle()
         style->SetTitleSize(0.05, "XYZ");
         style->SetMarkerStyle(20);
         style->SetMarkerSize(0.8);
-        style->SetMarkerColor(AtlasColors::Data());
-        style->SetHistLineColor(AtlasColors::Prediction());
+        style->SetMarkerColor(colors::Data());
+        style->SetHistLineColor(colors::Prediction());
         style->SetHistLineStyle(1);
         style->SetHistLineWidth(2);
         style->SetHistFillStyle(0);
@@ -84,5 +85,7 @@ inline TLatex* AtlasLabel(double x, double y, const char* text = "")
     if (text && *text) title += std::string(" #font[42]{") + text + "}";
     return label.DrawLatex(x, y, title.c_str());
 }
+
+} // namespace ana_atlas_style
 
 #endif

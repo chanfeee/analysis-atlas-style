@@ -32,4 +32,4 @@ def use_root_style():
         raise FileNotFoundError(f"Bundled ROOT style header is missing: {header}")
     if not ROOT.gInterpreter.Declare(f'#include "{header.as_posix()}"'):
         raise RuntimeError(f"ROOT could not load the bundled style: {header}")
-    return ROOT.SetAtlasStyle()
+    return ROOT.ana_atlas_style.SetAtlasStyle()

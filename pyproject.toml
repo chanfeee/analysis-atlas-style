@@ -21,16 +21,16 @@ mpl = [
 ]
 
 [project.scripts]
-atlas-style = "plotting.__main__:main"
+atlas-style = "ana_atlas_style.__main__:main"
 
 [tool.setuptools]
-packages = ["plotting", "plotting.root"]
-package-dir = {plotting = "."}
+packages = ["ana_atlas_style", "ana_atlas_style.root"]
+package-dir = {ana_atlas_style = "."}
 include-package-data = false
 
 [tool.setuptools.dynamic]
-version = {attr = "plotting.__version__"}
+version = {attr = "ana_atlas_style.__version__"}
 
 [tool.setuptools.package-data]
-plotting = ["README.md"]
-"plotting.root" = ["*.h"]
+ana_atlas_style = ["README.md", "README.en.md"]
+"ana_atlas_style.root" = ["*.h"]

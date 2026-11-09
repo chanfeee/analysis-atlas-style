@@ -10,7 +10,7 @@
 
 void atlas_root()
 {
-    SetAtlasStyle();
+    ana_atlas_style::SetAtlasStyle();
     TCanvas canvas("atlas_example", "", 800, 600);
     canvas.SetCanvasSize(800, 600);
     TH1D sample("atlas_toy_sample", ";#it{m} [GeV];Events / 10 GeV", 10, 60, 160);
@@ -34,24 +34,24 @@ void atlas_root()
     }
     sample.SetMinimum(0);
     sample.SetMaximum(190);
-    AtlasStyle::Data(sample);
-    AtlasStyle::Uncertainty(band);
-    AtlasStyle::Prediction(expected);
-    AtlasStyle::Signal(signal);
+    ana_atlas_style::Data(sample);
+    ana_atlas_style::Uncertainty(band);
+    ana_atlas_style::Prediction(expected);
+    ana_atlas_style::Signal(signal);
     sample.Draw("E1 X0");
     band.Draw("2 SAME");
     expected.Draw("HIST SAME");
     signal.Draw("HIST SAME");
     sample.Draw("E1 X0 SAME");
 
-    AtlasLabel(0.20, 0.89, "Simulation");
+    ana_atlas_style::AtlasLabel(0.20, 0.89, "Simulation");
     TLatex info;
     info.SetNDC();
     info.SetTextFont(42);
     info.SetTextSize(0.04);
     info.DrawLatex(0.20, 0.79, "#sqrt{s} = 13 TeV");
     TLegend legend(0.62, 0.64, 0.94, 0.90);
-    AtlasStyle::Legend(legend);
+    ana_atlas_style::Legend(legend);
     legend.AddEntry(&sample, "Toy sample", "pe");
     legend.AddEntry(&expected, "Toy prediction", "l");
     legend.AddEntry(&band, "Toy uncertainty", "f");

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import ROOT
 
-from plotting import use_root_style
+from ana_atlas_style import use_root_style
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
         pad.SetLogy(logy)
         pad.DrawFrame(*bounds, f";{x_title};{y_title}")
         label = ROOT.TLatex()
-        ROOT.AtlasStyle.Annotation(label)
+        ROOT.ana_atlas_style.Annotation(label)
         label.DrawLatex(0.16, 0.97, title)
 
     def graph(x, y):
@@ -34,7 +34,7 @@ def main():
 
     def legend(bounds, entries, columns=1):
         key = ROOT.TLegend(*bounds)
-        ROOT.AtlasStyle.Legend(key)
+        ROOT.ana_atlas_style.Legend(key)
         key.SetNColumns(columns)
         for obj, label, draw_option in entries:
             key.AddEntry(obj, label, draw_option)
@@ -46,8 +46,8 @@ def main():
     median = [1.5, 1.1, 0.8, 0.9, 1.0]
     bands = []
     for down, up, preset in (
-        (0.4, 0.5, ROOT.AtlasStyle.Expected2Sigma),
-        (0.2, 0.2, ROOT.AtlasStyle.Expected1Sigma),
+        (0.4, 0.5, ROOT.ana_atlas_style.Expected2Sigma),
+        (0.2, 0.2, ROOT.ana_atlas_style.Expected1Sigma),
     ):
         band = ROOT.TGraphAsymmErrors(len(mass))
         for i, (x, y) in enumerate(zip(mass, median)):
@@ -57,10 +57,10 @@ def main():
         band.Draw("3 SAME")
         bands.append(band)
     expected = graph(mass, median)
-    ROOT.AtlasStyle.Expected(expected)
+    ROOT.ana_atlas_style.Expected(expected)
     expected.Draw("L SAME")
     observed = graph(mass, [1.4, 1.2, 0.95, 0.8, 1.1])
-    ROOT.AtlasStyle.Data(observed)
+    ROOT.ana_atlas_style.Data(observed)
     observed.Draw("LP SAME")
     legend((0.43, 0.70, 0.94, 0.88),
            [(observed, "Observed", "lp"), (expected, "Expected", "l"),
@@ -70,13 +70,13 @@ def main():
     frame(2, "Likelihood scan", "#kappa", "-2#Delta ln L", (-2, 0, 2, 5))
     x = [-2 + 0.1 * i for i in range(41)]
     observed_scan = graph(x, [(value - 0.2)**2 for value in x])
-    ROOT.AtlasStyle.Series(observed_scan, 0)
+    ROOT.ana_atlas_style.Series(observed_scan, 0)
     observed_scan.Draw("L SAME")
     expected_scan = graph(x, [0.7 * value**2 for value in x])
-    ROOT.AtlasStyle.Expected(expected_scan)
+    ROOT.ana_atlas_style.Expected(expected_scan)
     expected_scan.Draw("L SAME")
     reference = ROOT.TLine(-2, 1, 2, 1)
-    ROOT.AtlasStyle.Reference(reference)
+    ROOT.ana_atlas_style.Reference(reference)
     reference.Draw()
     legend((0.46, 0.72, 0.73, 0.88),
            [(observed_scan, "Observed", "l"), (expected_scan, "Expected", "l")])
@@ -84,7 +84,7 @@ def main():
     frame(3, "Efficiency", "p_{T} [GeV]", "Efficiency", (15, 0, 105, 1.05))
     pt = [20, 40, 60, 80, 100]
     simulation = graph(pt, [0.40, 0.68, 0.83, 0.88, 0.91])
-    ROOT.AtlasStyle.Series(simulation, 0)
+    ROOT.ana_atlas_style.Series(simulation, 0)
     simulation.Draw("L SAME")
     measured = ROOT.TGraphErrors(len(pt))
     for i, (x, y, error) in enumerate(zip(
@@ -92,7 +92,7 @@ def main():
     )):
         measured.SetPoint(i, x, y)
         measured.SetPointError(i, 0, error)
-    ROOT.AtlasStyle.Data(measured)
+    ROOT.ana_atlas_style.Data(measured)
     measured.Draw("P SAME")
     legend((0.64, 0.22, 0.93, 0.39),
            [(measured, "Toy data", "pe"), (simulation, "Simulation", "l")])
@@ -102,8 +102,8 @@ def main():
     tpr = [0.15 + 0.85 * i / 29 for i in range(30)]
     roc_a = graph(tpr, [value**3 for value in tpr])
     roc_b = graph(tpr, [value**5 for value in tpr])
-    ROOT.AtlasStyle.Series(roc_a, 0)
-    ROOT.AtlasStyle.Series(roc_b, 1)
+    ROOT.ana_atlas_style.Series(roc_a, 0)
+    ROOT.ana_atlas_style.Series(roc_b, 1)
     roc_a.Draw("L SAME")
     roc_b.Draw("L SAME")
     legend((0.65, 0.22, 0.93, 0.39), [(roc_a, "Model A", "l"), (roc_b, "Model B", "l")])
@@ -113,11 +113,11 @@ def main():
     for name, title, axes, values, preset in (
         ("density", "Response matrix", "Truth bin;Reco bin;Events",
          [[21, 8, 1, 0], [4, 43, 12, 2], [0, 11, 54, 17], [0, 1, 13, 38]],
-         ROOT.AtlasStyle.Density),
+         ROOT.ana_atlas_style.Density),
         ("correlation", "Correlation matrix", "Parameter;Parameter;#rho",
          [[1, 0.62, -0.31, 0.02], [0.62, 1, -0.25, 0.30],
           [-0.31, -0.25, 1, -0.46], [0.02, 0.30, -0.46, 1]],
-         ROOT.AtlasStyle.Correlation),
+         ROOT.ana_atlas_style.Correlation),
     ):
         pad = ROOT.TCanvas(f"gallery_{name}", "", 750, 650)
         pad.SetRightMargin(0.21)
@@ -133,7 +133,7 @@ def main():
         preset(histogram)
         histogram.Draw("COLZ")
         label = ROOT.TLatex()
-        ROOT.AtlasStyle.Annotation(label)
+        ROOT.ana_atlas_style.Annotation(label)
         label.DrawLatex(0.16, 0.96, title)
         pad.Print(str(output / f"gallery_root_{name}.pdf"), "EmbedFonts")
 

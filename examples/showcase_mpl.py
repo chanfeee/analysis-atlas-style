@@ -1,4 +1,4 @@
-"""Full ATLAS style example: python -m plotting.examples.showcase_mpl.
+"""Full ATLAS style example: python -m ana_atlas_style.examples.showcase_mpl.
 
 All layout and histogram operations stay in this editable example. Both
 backends read showcase_inputs.dat. These are toy inputs, not ATLAS results.
@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import numpy as np
 
-from plotting import artist_style, atlas_label, use_atlas_style
+from ana_atlas_style import artist_style, atlas_label, use_atlas_style
 
 
 def make_figure():
@@ -36,11 +36,11 @@ def make_figure():
     # Large areas use pale opaque fills; curves and edges retain full accents.
     background_c = ax.stairs(
         c, edges, baseline=0, fill=True,
-        label="Background C", **artist_style("background", index=3),
+        label="Background C", **artist_style("background", index=2),
     )
     background_b = ax.stairs(
         b + c, edges, baseline=c, fill=True,
-        label="Background B", **artist_style("background", index=2),
+        label="Background B", **artist_style("background", index=1),
     )
     background_a = ax.stairs(
         nominal, edges, baseline=b + c, fill=True,
